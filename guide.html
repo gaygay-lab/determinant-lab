@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f7f7f5">
+  <meta name="description" content="行列之间：让行列式的每一步变形都看得见。白灰黑交互教学模板。">
+  <title>行列之间 — 行列式动态实验室</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='8' fill='%23232323'/%3E%3Cpath d='M10 9v22M30 9v22M16 15h2m4 0h2m-8 10h2m4 0h2' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">跳到实验区</a>
+<div class="app">
+  <aside class="sidebar" aria-label="实验导航">
+    <a class="brand" href="./" aria-label="行列之间首页"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>行列之间<small>DETERMINANT LAB</small></span></a>
+    <div class="sidebar-body">
+      <div class="nav-caption">从笔记，到直觉</div>
+      <button class="nav-item selected" id="labNav" aria-current="page"><span class="nav-icon">⌘</span>交互实验<span class="nav-arrow">↗</span></button>
+      <button class="nav-item" data-open="idea"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M8.5 15.5a6 6 0 1 1 7 0L15 18H9Z"/></svg>本题思路</button>
+      <button class="nav-item" data-open="note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14v18H5zM8 7h8M8 11h8M8 15h5"/></svg>手写起点</button>
+      <div class="sidebar-rule"></div>
+      <div class="nav-caption">正在探索</div>
+      <div class="chapter"><span>01</span><div>求和与消元<small>从相同的列和开始</small></div></div>
+      <div class="side-illustration" aria-hidden="true"><span>1</span><span>−1</span><span>1</span><span>x−1</span><span>1</span><span>−1</span><span>x+1</span><span>−1</span><span>1</span><span>x−1</span><span>1</span><span>−1</span><span>x+1</span><span>−1</span><span>1</span><span>−1</span><div class="side-arrow">↖</div></div>
+      
+    </div>
+    <div class="sidebar-foot"><span class="status-dot"></span> 参考推演 <span>v.01</span></div>
+  </aside>
+  <div class="main-shell">
+    <header class="topbar"><div class="breadcrumb">线性代数<span>/</span><strong>行列式</strong><span class="preview-badge">参考路线</span></div><button class="quiet-button" data-open="help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M10 9a2 2 0 1 1 3 2c-1 1-1 1-1 2M12 16h.01"/></svg>怎么玩</button></header>
+    <main id="main">
+      <section class="page-intro"><div><div class="eyebrow">实验 01 <span>·</span> 四阶行列式</div><h1>第 1 题：求和与消元</h1><p>参考路线 · 可以回退和跳转步骤</p></div><button class="original-button" data-open="note"><span class="note-mini" aria-hidden="true">|x|</span><span>灵感来自你的笔记<small>查看原始手稿 ↗</small></span></button></section>
+      <section class="workbench" aria-label="行列式交互实验台">
+        <div class="experiment">
+          <div class="canvas-toolbar"><div class="segmented" role="group" aria-label="显示模式"><button class="active" id="symbolicMode" aria-pressed="true">符号推演</button><button id="numericMode" aria-pressed="false">数字验证</button></div><button id="reset" class="icon-button" aria-label="重新开始" title="重新开始"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9a8 8 0 1 1 0 6M4 3v6h6"/></svg></button></div>
+          <div class="numeric-controls" id="numericControls" hidden><label for="xValue">令 <i>x</i> = <output id="xOutput">2</output></label><input id="xValue" type="range" min="-3" max="3" step="1" value="2" aria-label="x 的取值"><span id="numericResult"></span></div>
+          <div class="matrix-stage" id="stage">
+            <div class="stage-caption"><span class="live-dot"></span><span id="stageCaption">观察：每一行的元素之和，都等于 x</span></div>
+            <div class="equation"><div class="lhs math" id="lhs">D =</div><div class="matrix-wrap" id="matrixWrap"><div class="column-labels" aria-hidden="true"><span>c₁</span><span>c₂</span><span>c₃</span><span>c₄</span></div><div class="row-labels" aria-hidden="true"><span>r₁</span><span>r₂</span><span>r₃</span><span>r₄</span></div><div class="matrix" id="matrix" role="img" aria-label="四阶行列式"></div><svg class="arrows" id="arrows" viewBox="0 0 360 304" aria-hidden="true"><defs><marker id="arrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0L6 3L0 6" fill="currentColor"/></marker></defs><g id="arrowPaths"></g></svg><div class="block-overlay" id="zeroBlock" hidden><span>0</span><small>2 × 2 零块</small></div></div><div class="final-answer math" id="finalAnswer" hidden>= x<sup>4</sup></div></div>
+            <div class="operation-formula math" id="operationFormula">c₁ ← c₁ + c₂ + c₃ + c₄</div>
+            <p class="canvas-note" id="canvasNote">试着把第 2、3、4 列，一起加到第 1 列。</p>
+            <div class="canvas-bottom"><span><span class="legend-line"></span>即将变化的位置</span><button id="compress" class="text-button" aria-pressed="false" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6M4 4v6M20 4h-6M20 4v6M4 20h6M4 20v-6M20 20h-6M20 20v-6"/></svg>收起零块</button></div>
+          </div>
+          <div class="playback"><button id="prev" class="icon-button" aria-label="上一步" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 6-6 6 6 6"/></svg></button><button id="play" class="icon-button" aria-label="自动演示" title="自动演示"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 10 7-10 7Z"/></svg></button><div class="timeline" id="timeline" aria-label="推演步骤"></div><span class="step-counter"><strong id="stepCurrent">01</strong> / 06</span><button id="next" class="icon-button" aria-label="下一步"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 6 6 6-6 6"/></svg></button></div>
+        </div>
+        <aside class="guide" aria-label="当前步骤说明"><div class="guide-top"><span>动手试一试</span><span id="guideNumber">01—05</span></div><div class="gesture" id="gesture" aria-hidden="true">←</div><h2 id="stepTitle">让所有列，向左靠拢。</h2><p id="stepDescription">不急着展开。把其余三列加到第一列，看看那些 1 和 −1 会发生什么。</p><div class="next-operation"><span id="operationLabel">这一次操作</span><div class="math" id="guideFormula">c₁ ← c₁ + c₂ + c₃ + c₄</div></div><button id="action" class="primary-button"><span id="actionText">向左合并</span><span id="actionArrow">←</span></button><div class="invariant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span id="invariantText">列的倍加，行列式的值不变。</span></div><div class="guide-divider"></div><button id="why" class="why-button" aria-expanded="false"><span>为什么可以这样做？</span><span>＋</span></button><p class="why-detail" id="whyDetail" hidden></p><div class="micro-tip"><span>观察提示</span><p id="observation">这些看起来不同的行，<br>其实藏着同一个和。</p></div></aside>
+      </section>
+      
+      
+    </main>
+  </div>
+</div>
+<div id="announcement" class="sr-only" role="status" aria-live="polite"></div>
+<dialog id="infoDialog"><div class="dialog-top"><h2 id="dialogTitle"></h2><button id="closeDialog" class="icon-button" aria-label="关闭"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><div id="dialogContent"></div></dialog>
+<script src="engine.js"></script><script src="guide.js"></script>
+</body>
+</html>
+
