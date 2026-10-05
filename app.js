@@ -191,7 +191,7 @@
     $('problemList').innerHTML=list.map(p=>`<button class="problem-link ${p.id===problem.id?'current':''}" data-problem="${p.id}" ${p.id===problem.id?'aria-current="page"':''}><span class="problem-index">${String(problems.findIndex(x=>x.id===p.id)+1).padStart(2,'0')}</span><span>${esc(p.title)}<small>${esc(p.family)} · ${esc(p.difficulty)}</small></span><span class="solved-mark">${savedGames[p.id]?.solved?'✓':''}</span></button>`).join('');
     $('bankProgress').textContent=problems.filter(p=>savedGames[p.id]?.solved).length+' / '+problems.length;
     $('problemTitle').textContent=levelLabel()+' · '+problem.title;
-    $('problemNote').textContent=n()+' 阶 · '+problem.family+' · '+problem.difficulty+(problem.formula?' · '+problem.formula:''); const pc=$('principleCard');pc.hidden=!problem.demoPrinciple;if(problem.demoPrinciple){$('principleTitle').textContent=problem.demoPrinciple.title;$('principleText').textContent=problem.demoPrinciple.text;}$('mengBadge').hidden=!String(problem.family||'').includes('范德蒙');
+    const isMeng=String(problem.family||'').includes('范德蒙');$('problemNote').textContent=n()+' 阶 · '+problem.family+' · '+problem.difficulty+(problem.formula?' · '+problem.formula:''); const pc=$('principleCard');pc.hidden=!problem.demoPrinciple&&!isMeng;if(problem.demoPrinciple){$('principleTitle').textContent=problem.demoPrinciple.title;$('principleText').textContent=problem.demoPrinciple.text;}else if(isMeng){$('principleTitle').textContent='范德蒙结构';$('principleText').textContent='第一行或第一列的1、幂次排列和差积连乘，是这类题的识别入口。';}$('mengBadge').hidden=!isMeng;
     $('currentCategory').textContent=problem.family;
     $('problemPicker').value=problem.id;
     $('previousProblem').disabled=problem.id===problems[0].id;
