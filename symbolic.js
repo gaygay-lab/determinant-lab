@@ -107,8 +107,9 @@
     const determinants = [[E.parse(1)]];
     if (n >= 1) determinants.push(polynomial('2x'));
     for (let k = 2; k <= n; k++) determinants.push(add(multiply(polynomial('2x'), determinants[k - 1]), constantMultiply(determinants[k - 2], -1)));
-    const state = stateFromMatrix(matrix);
-    return Object.freeze({ n, parameter: 'c = cos(θ)', matrix, state, determinants, recurrence: 'D₀ = 1，D₁ = 2c，Dₙ = 2cDₙ₋₁ − Dₙ₋₂', closedForm: `sin((${n + 1})θ) / sin θ`, polynomial: determinants[n] });
+    const state = stateFromMatrix(matrix), sampleAt = c => ({ c: E.fmt(c), value: E.fmt(evaluate(determinants[n], c)) });
+    const numericSamples = [-1, 0, '1/2', 1].map(sampleAt);
+    return Object.freeze({ n, parameter: 'c = cos(θ)', matrix, state, determinants, recurrence: 'D₀ = 1，D₁ = 2c，Dₙ = 2cDₙ₋₁ − Dₙ₋₂', closedForm: `sin((${n + 1})θ) / sin θ`, polynomial: determinants[n], numericSamples });
   }
   function cofactorExpansion(state, axis = 'row', index = 0) {
     const s = cloned(state), normalizedAxis = axisName(axis);
