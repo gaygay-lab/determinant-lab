@@ -3719,5 +3719,306 @@ window.PROBLEMS = [
         "factor": "1"
       }
     ]
+  },
+  {
+    "id": 71,
+    "title": "2cos x 三对角 · n=3",
+    "family": "三对角递推",
+    "difficulty": "挑战",
+    "matrix": [
+      [
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        0
+      ]
+    ],
+    "expected": "0",
+    "formula": "sin(4x)/sin x",
+    "special": "cos-tridiagonal",
+    "n": 3,
+    "hint": "先观察主对角线带和上下次对角线。",
+    "note": "这里用 x=π/2 的数值截面展示结构；通式为 sin(4x)/sin x。",
+    "demoPrinciple": {
+      "title": "三项递推来自带状结构",
+      "text": "每扩大一阶，只会新增一条主对角线乘积和一条回退项。"
+    },
+    "suggestedOps": []
+  },
+  {
+    "id": 72,
+    "title": "2cos x 三对角 · n=4",
+    "family": "三对角递推",
+    "difficulty": "挑战",
+    "matrix": [
+      [
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        1,
+        0
+      ]
+    ],
+    "expected": "1",
+    "formula": "sin(5x)/sin x",
+    "special": "cos-tridiagonal",
+    "n": 4,
+    "hint": "把D1、D2写出来，观察D_n的递推。",
+    "note": "这里用 x=π/2 的数值截面展示结构；通式为 sin(5x)/sin x。",
+    "demoPrinciple": {
+      "title": "只由三个数和阶数决定",
+      "text": "主对角线、上下次对角线和阶数已经决定整个递推。"
+    },
+    "suggestedOps": []
+  },
+  {
+    "id": 73,
+    "title": "2cos x 三对角 · n=5",
+    "family": "三对角递推",
+    "difficulty": "挑战",
+    "matrix": [
+      [
+        0,
+        1,
+        0,
+        0,
+        0
+      ],
+      [
+        1,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        0,
+        0,
+        0,
+        1,
+        0
+      ]
+    ],
+    "expected": "0",
+    "formula": "sin(6x)/sin x",
+    "special": "cos-tridiagonal",
+    "n": 5,
+    "hint": "沿主对角线看冲击波，再回到递推。",
+    "note": "这里用 x=π/2 的数值截面展示结构；通式为 sin(6x)/sin x。",
+    "demoPrinciple": {
+      "title": "从无限晶格截取一段",
+      "text": "带状矩阵的局部规则不变，阶数只是截取长度。"
+    },
+    "suggestedOps": []
+  },
+  {
+    "id": 74,
+    "title": "爽关：一键汇入，整片归零",
+    "family": "爽关",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "expected": "2",
+    "hint": "按A，观察整列方块汇入后形成下三角。",
+    "note": "这是一个适合第一次看到大块归零反馈的爽关。",
+    "demoPrinciple": {
+      "title": "汇入后立刻读三角",
+      "text": "方块全部流入第一列，剩余结构一眼可读。"
+    },
+    "suggestedOps": [
+      {
+        "type": "sum",
+        "axis": "column",
+        "target": 0
+      }
+    ]
+  },
+  {
+    "id": 75,
+    "title": "爽关：一列变成零",
+    "family": "爽关",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "expected": "3",
+    "hint": "让第二列减去第一列的2倍，整列零会出现。",
+    "note": "零块和主对角线会连续点亮。",
+    "demoPrinciple": {
+      "title": "零是最强的视觉反馈",
+      "text": "一整列变成0时，排列路线会大面积消失。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "column",
+        "target": 1,
+        "source": 0,
+        "factor": "-2"
+      }
+    ]
+  },
+  {
+    "id": 76,
+    "title": "爽关：第一列汇入后下三角",
+    "family": "爽关",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "expected": "3",
+    "hint": "按A，让第二列流进第一列。",
+    "note": "整列移动后立刻形成下三角。",
+    "demoPrinciple": {
+      "title": "方块汇入后立即读值",
+      "text": "这是最短的视觉爽点：一条汇入轨迹，直接留下对角线。"
+    },
+    "suggestedOps": [
+      {
+        "type": "sum",
+        "axis": "column",
+        "target": 0
+      }
+    ]
+  },
+  {
+    "id": 77,
+    "title": "爽关：一条列操作清空上方",
+    "family": "爽关",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "expected": "3",
+    "hint": "选第二列为目标，第一列为来源，自动建议−2。",
+    "note": "第二列减去第一列的2倍后直接变成对角结构。",
+    "demoPrinciple": {
+      "title": "列倍加也能一击造零",
+      "text": "目标列沿着第一列滑过去，两个格子同时落位，右上角归零。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "column",
+        "target": 1,
+        "source": 0,
+        "factor": "-2"
+      }
+    ]
+  },
+  {
+    "id": 78,
+    "title": "爽关：三阶连续落零",
+    "family": "爽关",
+    "difficulty": "进阶",
+    "matrix": [
+      [
+        1,
+        2,
+        0
+      ],
+      [
+        3,
+        4,
+        1
+      ],
+      [
+        0,
+        1,
+        2
+      ]
+    ],
+    "expected": "-5",
+    "hint": "先消掉左下，再消掉第二列下面的1。",
+    "note": "两次消元后对角线为1、−2、5/2，结果−5。",
+    "demoPrinciple": {
+      "title": "连续两次落零",
+      "text": "每次只消一个位置，第三行会沿着斜线继续落零，最后一口气读对角线。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "row",
+        "target": 1,
+        "source": 0,
+        "factor": "-3"
+      },
+      {
+        "type": "add",
+        "axis": "row",
+        "target": 2,
+        "source": 1,
+        "factor": "1/2"
+      }
+    ]
   }
 ];
