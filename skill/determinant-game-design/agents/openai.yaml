@@ -1,0 +1,3 @@
+display_name: Determinant Game Design
+short_description: Game UX, onboarding, and player-friendly math interactions
+default_prompt: Use $determinant-game-design for an educational game with a forgiving first minute, clear feedback, and a reversible GitHub Pages release.

@@ -161,9 +161,14 @@
   document.addEventListener('keydown',e=>{if($('infoDialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();travel(index+(e.shiftKey?1:-1));return;}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();travel(index+1);return;}if(e.ctrlKey||e.metaKey||e.altKey)return;if(k==='t'){e.preventDefault();type='transpose';apply();}else if(k==='a'){e.preventDefault();axis='column';target=0;type='sum';source=source===0?1:source;apply();}else if(k==='r'){e.preventDefault();axis='row';render();feedback('已切换为按行操作。');}else if(k==='c'){e.preventDefault();axis='column';render();feedback('已切换为按列操作。');}else if(k==='m'){e.preventDefault();type='add';manualCoefficient=false;render();feedback('已选择倍加；左键目标，右键来源。');}else if(k==='x'){e.preventDefault();type='extractX';if(factorInfo())apply();else{render();feedback('当前选中行列没有可提取的公因子。','error');}}else if(k==='s'){e.preventDefault();type='swap';apply();}else if(k==='v'){e.preventDefault();$('reset').click();}});
   $('showDemo').addEventListener('click',()=>{const ops=problem.suggestedOps||[];$('demoPanel').hidden=false;$('demoPanel').innerHTML='<strong>最短参考路线</strong>'+ops.map((item,i)=>`<div class="demo-step"><b>${i+1}</b><span>${esc(item.type==='extractX'?'提取 x':item.type==='sum'?'全部汇入':item.type==='transpose'?'转置':item.type==='swap'?'交换':item.type==='scale'?'倍乘':'倍加')} · ${item.axis?((item.axis==='row'?'R':'C')+(item.target+1)):''}</span></div>`).join('')+'<small>这是参考路线，不会替你执行。</small>';$('showDemo').textContent='已显示最短演示';S.play('select');});
   $('bankToggle').addEventListener('click',()=>{const open=$('bankToggle').getAttribute('aria-expanded')==='true';$('bankToggle').setAttribute('aria-expanded',String(!open));$('bankToggle').innerHTML=open?'选择关卡 <span>⌄</span>':'收起题库 <span>⌃</span>';$('bankMenu').hidden=open;document.querySelector('.bank-sidebar').classList.toggle('bank-open',!open);});
-  function openTutorial(){if(levelIndex()!==1)return;let seen=false;try{seen=localStorage.getItem('det-lab-tutorial-v1')==='seen';}catch{}if(!seen){$('tutorialOverlay').hidden=false;document.body.classList.add('tutorial-active');}}
-  $('tutorialNext').addEventListener('click',()=>{try{localStorage.setItem('det-lab-tutorial-v1','seen');}catch{}$('tutorialOverlay').hidden=true;document.body.classList.remove('tutorial-active');S.play('select');});
+  function openTutorial(){if(levelIndex()!==1)return;let seen=false;try{seen=localStorage.getItem('det-lab-tutorial-v2')==='seen';}catch{}if(!seen){$('tutorialOverlay').hidden=false;document.body.classList.add('tutorial-active');}}
+  let openingTimer=null;
+  function finishOpening(){clearTimeout(openingTimer);$('openingDemo').hidden=true;try{localStorage.setItem('det-lab-opening-v1','seen');}catch{}openTutorial();}
+  function openOpening(){if(levelIndex()!==1){$('openingDemo').hidden=true;return;}let seen=false;try{seen=localStorage.getItem('det-lab-opening-v1')==='seen';}catch{}if(seen){$('openingDemo').hidden=true;openTutorial();return;}$('openingDemo').hidden=false;openingTimer=setTimeout(finishOpening,5200);}
+  $('openingSkip').addEventListener('click',finishOpening);
+  $('tutorialNext').addEventListener('click',()=>{try{localStorage.setItem('det-lab-tutorial-v2','seen');}catch{}$('tutorialOverlay').hidden=true;document.body.classList.remove('tutorial-active');S.play('select');});
   $('tutorialSkip').addEventListener('click',()=>{$('tutorialNext').click();});
+  window.addEventListener('beforeunload',e=>{if(index>0&&!won){e.preventDefault();e.returnValue='';}});
   function renderBank(){
     const family=$('bankFilter').value;
     const list=problems.filter(p=>family==='all'||p.family===family);
@@ -188,6 +193,6 @@
   $('problemList').addEventListener('click',e=>{const b=e.target.closest('[data-problem]');if(b)switchProblem(Number(b.dataset.problem));});
   $('previousProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)-1]?.id));
   $('nextProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)+1]?.id));
-  if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}render();armIdle();openTutorial();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
+  if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}render();armIdle();openOpening();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
 })();
 
