@@ -1,0 +1,15 @@
+PASS C1 openingDemo visible; animations=1
+PASS C2 data-tour-step values=3,2,1,5,4,6; step 2 waits for player
+PASS C3 one demo entry: #demoButton
+PASS C6 keyboard hints and action labels visible
+PASS C4 78 level demos completed with answer state
+PASS C5 exitModal visible after progress and top mouseout
+PASS C5-repeat exitModal only once per session
+PASS C7 cos-tridiagonal=3; formula fields present
+PASS C11 total=78; fun levels=5
+PASS C8 meng-badge appears for Vandermonde
+PASS C9 laplace operation and definition mode present
+PASS C10 mobile tap-only first level completed
+PASS C12 saveMoment produced a download
+PASS C13 paper palette colors=rgb(247, 247, 245)|rgb(253, 253, 251)|rgba(0, 0, 0, 0)
+PASS C14 DetEngine: 166 checks passed. | SymbolicGame: 190 checks passed. | 78 problems and 228 reference moves verified.

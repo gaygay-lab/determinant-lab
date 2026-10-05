@@ -12,3 +12,6 @@ Read: 行列之间 for first-time linear-algebra learners · core loop=watch →
 - Added 3 guided cos-tridiagonal metadata levels and 3 additional reward levels; question count is now 78. Existing math tests remain the gate for each addition.
 - The public acceptance script is intentionally run against a fresh browser context and a versioned URL; it is not allowed to read or write the player's storage.
 - One limitation remains explicitly tracked: browser-native `beforeunload` text cannot be customized. The in-page exit dialog is the custom message; the native guard is only a fallback.
+
+- Online acceptance was run against a fresh Chrome context with commit `f90a839`; all C1–C14 checks passed.
+- The acceptance output is committed in `audit/ACCEPTANCE.txt`.
