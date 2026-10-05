@@ -6,7 +6,7 @@ const G=require('../symbolic.js');
 const sandbox={window:{}};
 vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../problems.js'),'utf8'),sandbox);
 const problems=sandbox.window.PROBLEMS;
-assert.equal(problems.length,60);
+assert.equal(problems.length,70);
 let moves=0;
 for(const problem of problems){
   let state=G.stateFromMatrix(problem.matrix);
@@ -21,3 +21,4 @@ for(const problem of problems){
   assert.ok(G.equals(result,problem.expected),'Answer '+problem.id);
 }
 console.log(`${problems.length} problems and ${moves} reference moves verified.`);
+

@@ -4,7 +4,7 @@
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const sub=['₁','₂','₃','₄','₅','₆'];
-  const problemOrder=[2,3,4,6,9,11,18,19,20,23,31,32,39,45,47,50,51,52,54,55,57,59,60,1]; const orderRank=new Map(problemOrder.map((id,i)=>[id,i])); const problems=[...window.PROBLEMS].sort((a,b)=>(orderRank.get(a.id)??999+a.id)-(orderRank.get(b.id)??999+b.id)); let problem=problems[0], savedGames={};
+  const problemOrder=[61,62,63,64,65,66,67,68,69,70,2,3,4,6,9,11,18,19,20,23,31,32,39,45,47,50,51,52,54,55,57,59,60,1]; const orderRank=new Map(problemOrder.map((id,i)=>[id,i])); const problems=[...window.PROBLEMS].sort((a,b)=>(orderRank.get(a.id)??999+a.id)-(orderRank.get(b.id)??999+b.id)); let problem=problems[0], savedGames={};
   const pretty=s=>String(s).replace(/([RC])([1-6])/g,(_,a,b)=>a.toLowerCase()+sub[Number(b)-1]).replace(/\+ \(-1\)/g,'− ').replace(/\+ \(1\)/g,'+ ').replace(/-/g,'−');
   let history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}],index=0;
   let axis='column',target=0,source=1,type='add',numeric=false,x=2,preview=false,compact=false,won=false;
@@ -23,8 +23,8 @@
 
   const op=()=>({type,axis,target,source,factor:$('coefficient').value.trim().replace('−','-')});
   const zero=p=>G.equals(p,0);
-  function persist(){try{savedGames[problem.id]={history,index,solved:!!savedGames[problem.id]?.solved};localStorage.setItem('det-lab-bank-v3',JSON.stringify({version:3,active:problem.id,games:savedGames}));}catch{$('saveStatus').textContent='当前浏览器暂不能保存路线。';}}
-  try{const saved=JSON.parse(localStorage.getItem('det-lab-bank-v3'));if(saved?.version===3&&saved.games){savedGames=saved.games;problem=problems.find(p=>p.id===saved.active)||problems[0];const route=savedGames[problem.id];if(route&&Array.isArray(route.history)&&route.history.length<500&&Number.isInteger(route.index)&&route.index>=0&&route.index<route.history.length&&G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected)){history=route.history;index=route.index;}else{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}}}catch{problem=problems[0];history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}
+  function persist(){try{savedGames[problem.id]={history,index,solved:!!savedGames[problem.id]?.solved};localStorage.setItem('det-lab-bank-v4',JSON.stringify({version:4,active:problem.id,games:savedGames}));}catch{$('saveStatus').textContent='当前浏览器暂不能保存路线。';}}
+  try{const saved=JSON.parse(localStorage.getItem('det-lab-bank-v4'));if(saved?.version===4&&saved.games){savedGames=saved.games;problem=problems.find(p=>p.id===saved.active)||problems[0];const route=savedGames[problem.id];if(route&&Array.isArray(route.history)&&route.history.length<500&&Number.isInteger(route.index)&&route.index>=0&&route.index<route.history.length&&G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected)){history=route.history;index=route.index;}else{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}}}catch{problem=problems[0];history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}
   if(savedGames[problem.id]?.solved){const nextUnsolved=problems.find(p=>!savedGames[p.id]?.solved);if(nextUnsolved){problem=nextUnsolved;history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'开始下一关。'}];index=0;}}
   function countTerms(matrix){let count=0;function walk(r,used){if(r===matrix.length){count++;return;}for(let c=0;c<matrix.length;c++)if(!(used&(1<<c))&&!zero(matrix[r][c]))walk(r+1,used|(1<<c));}walk(0,0);return count;}
   function getZeroBlocks(matrix){
@@ -151,7 +151,7 @@
     $('problemList').innerHTML=list.map(p=>`<button class="problem-link ${p.id===problem.id?'current':''}" data-problem="${p.id}" ${p.id===problem.id?'aria-current="page"':''}><span class="problem-index">${String(problems.findIndex(x=>x.id===p.id)+1).padStart(2,'0')}</span><span>${esc(p.title)}<small>${esc(p.family)} · ${esc(p.difficulty)}</small></span><span class="solved-mark">${savedGames[p.id]?.solved?'✓':''}</span></button>`).join('');
     $('bankProgress').textContent=problems.filter(p=>savedGames[p.id]?.solved).length+' / '+problems.length;
     $('problemTitle').textContent=levelLabel()+' · '+problem.title;
-    $('problemNote').textContent=n()+' 阶 · '+problem.family+' · '+problem.difficulty;
+    $('problemNote').textContent=n()+' 阶 · '+problem.family+' · '+problem.difficulty; const pc=$('principleCard');pc.hidden=!problem.demoPrinciple;if(problem.demoPrinciple){$('principleTitle').textContent=problem.demoPrinciple.title;$('principleText').textContent=problem.demoPrinciple.text;}
     $('currentCategory').textContent=problem.family;
     $('problemPicker').value=problem.id;
     $('previousProblem').disabled=problem.id===problems[0].id;
@@ -171,3 +171,4 @@
   $('nextProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)+1]?.id));
   render();armIdle();openTutorial();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
 })();
+
