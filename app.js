@@ -25,7 +25,8 @@
     if(type==='scale'){const line=linePolys();for(const p of line){if(p.length===1&&!E.isZero(p[0]))return E.div(1,p[0]);}}
     return null;
   }
-  function syncCoefficient(){if(manualCoefficient||!['add','scale'].includes(type))return;const k=autoFactor();if(k){$('coefficient').value=E.fmt(k);$('coefficientHelp').textContent='已自动计算；可按“自动计算”重新同步。';}else{$('coefficientHelp').textContent='当前选项不能自动确定倍数；可手动输入整数或分数。';}}
+  function configureForProblem(){const hint=problem.suggestedOps?.[0];if(hint){type=hint.type;axis=hint.axis||'column';target=hint.target??0;source=hint.source??(target===0?1:0);manualCoefficient=false;if(hint.factor)$('coefficient').value=String(hint.factor);}else{type='add';axis='column';target=0;source=1;manualCoefficient=false;}}
+  function syncCoefficient(){if(manualCoefficient||!['add','scale'].includes(type))return;const preferred=problem.demoPrinciple&&problem.suggestedOps?.[0]?.type===type&&levelIndex()<=10?problem.suggestedOps[0].factor:null;const k=preferred?E.parse(preferred):autoFactor();if(k){$('coefficient').value=E.fmt(k);$('coefficientHelp').textContent='已自动计算；可按“自动计算”重新同步。';}else{$('coefficientHelp').textContent='当前选项不能自动确定倍数；可手动输入整数或分数。';}}
   const effectiveOp=()=>{const base=op(),info=type==='extractX'?factorInfo():null;if(type==='extractX'&&info?.kind==='constant'){base.type='scale';base.factor=E.fmt(E.div(1,info.value));}return base;};
   function armIdle(){clearTimeout(idleTimer);demoVisible=false;$('demoAssist').hidden=true;$('demoPanel').hidden=true;idleTimer=setTimeout(()=>{demoVisible=true;$('demoAssist').hidden=false;feedback('已经尝试一分钟了。需要时可以打开黄色的最短演示；也可以继续自己探索。');},60000);}
   function resetIdle(){armIdle();}
@@ -185,7 +186,7 @@
     if(id===problem.id)return;persist();const next=problems.find(p=>p.id===id);if(!next)return;
     problem=next;const route=savedGames[id];
     try{if(!route||!G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected))throw new Error();history=route.history;index=route.index;}catch{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'原始题目。'}];index=0;}
-    axis='column';target=0;source=1;type='add';numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;if(levelIndex()===1){axis='row';target=1;source=0;}resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
+    numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;configureForProblem();if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
   }
   $('bankFilter').innerHTML='<option value="all">全部题型</option>'+[...new Set(problems.map(p=>p.family))].map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
   $('problemPicker').innerHTML=problems.map((p,i)=>`<option value="${p.id}">${String(i+1).padStart(2,'0')} · ${esc(p.title)}</option>`).join('');
@@ -193,6 +194,6 @@
   $('problemList').addEventListener('click',e=>{const b=e.target.closest('[data-problem]');if(b)switchProblem(Number(b.dataset.problem));});
   $('previousProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)-1]?.id));
   $('nextProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)+1]?.id));
-  if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}render();armIdle();openOpening();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
+  configureForProblem();if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}render();armIdle();openOpening();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
 })();
 
