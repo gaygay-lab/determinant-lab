@@ -163,8 +163,8 @@
   $('bankToggle').addEventListener('click',()=>{const open=$('bankToggle').getAttribute('aria-expanded')==='true';$('bankToggle').setAttribute('aria-expanded',String(!open));$('bankToggle').innerHTML=open?'选择关卡 <span>⌄</span>':'收起题库 <span>⌃</span>';$('bankMenu').hidden=open;document.querySelector('.bank-sidebar').classList.toggle('bank-open',!open);});
   function openTutorial(){if(levelIndex()!==1)return;let seen=false;try{seen=localStorage.getItem('det-lab-tutorial-v2')==='seen';}catch{}if(!seen){$('tutorialOverlay').hidden=false;document.body.classList.add('tutorial-active');}}
   let openingTimer=null;
-  function finishOpening(){clearTimeout(openingTimer);$('openingDemo').hidden=true;try{localStorage.setItem('det-lab-opening-v1','seen');}catch{}openTutorial();}
-  function openOpening(){if(levelIndex()!==1){$('openingDemo').hidden=true;return;}let seen=false;try{seen=localStorage.getItem('det-lab-opening-v1')==='seen';}catch{}if(seen){$('openingDemo').hidden=true;openTutorial();return;}$('openingDemo').hidden=false;openingTimer=setTimeout(finishOpening,5200);}
+  function finishOpening(){clearTimeout(openingTimer);$('openingDemo').hidden=true;try{sessionStorage.setItem('det-lab-opening-v2','seen');}catch{}openTutorial();}
+  function openOpening(){let seen=false;try{seen=sessionStorage.getItem('det-lab-opening-v2')==='seen';}catch{}if(seen){$('openingDemo').hidden=true;openTutorial();return;}$('openingDemo').hidden=false;openingTimer=setTimeout(finishOpening,5200);}
   $('openingSkip').addEventListener('click',finishOpening);
   $('tutorialNext').addEventListener('click',()=>{try{localStorage.setItem('det-lab-tutorial-v2','seen');}catch{}$('tutorialOverlay').hidden=true;document.body.classList.remove('tutorial-active');S.play('select');});
   $('tutorialSkip').addEventListener('click',()=>{$('tutorialNext').click();});
