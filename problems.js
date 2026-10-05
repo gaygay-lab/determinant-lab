@@ -1,4 +1,3 @@
-/* 60 exact-verified determinant problems. Operation indices are zero-based. */
 window.PROBLEMS = [
   {
     "id": 1,
@@ -3403,356 +3402,322 @@ window.PROBLEMS = [
         "factor": "-4"
       }
     ]
+  },
+  {
+    "id": 61,
+    "title": "新手：倍加把它变成三角形",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        3,
+        4
+      ]
+    ],
+    "expected": "-2",
+    "hint": "把第二行减去第一行的3倍，下面左侧就会变成0。",
+    "note": "上三角后只看主对角线：1×(−2)=−2。",
+    "demoPrinciple": {
+      "title": "倍加不改变行列式",
+      "text": "把一行的倍数加到另一行，是剪切，不改变有向面积；造出三角形后，答案就是主对角线乘积。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "row",
+        "target": 1,
+        "source": 0,
+        "factor": "-3"
+      }
+    ]
+  },
+  {
+    "id": 62,
+    "title": "新手：交换一次，符号变了",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        3
+      ]
+    ],
+    "expected": "-2",
+    "hint": "左上角是0，先交换两行，再读上三角。",
+    "note": "交换行让有向面积反向，外因子记录−1。",
+    "demoPrinciple": {
+      "title": "交换行会变号",
+      "text": "同一个平行四边形换了方向，面积大小不变，但有向面积的正负相反。"
+    },
+    "suggestedOps": [
+      {
+        "type": "swap",
+        "axis": "row",
+        "target": 0,
+        "source": 1
+      }
+    ]
+  },
+  {
+    "id": 63,
+    "title": "新手：点击倍乘，数字自动算",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "expected": "2",
+    "hint": "点击倍乘，系统会自动填入2；不用自己输入。",
+    "note": "第一行乘2后，外因子自动补偿为1/2。",
+    "demoPrinciple": {
+      "title": "倍乘会同步改变因子",
+      "text": "一行放大几倍，有向面积也放大几倍；游戏会把倍率放在矩阵外。"
+    },
+    "suggestedOps": [
+      {
+        "type": "scale",
+        "axis": "row",
+        "target": 0,
+        "factor": "2"
+      }
+    ]
+  },
+  {
+    "id": 64,
+    "title": "新手：一键提出公因子",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        2,
+        4
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "expected": "4",
+    "hint": "长按第一行，点击“提出公因子”，系统自动找到2。",
+    "note": "第一行提出2后，外因子为2，剩余三角矩阵对角线为1、2。",
+    "demoPrinciple": {
+      "title": "共同因子可以直接提出",
+      "text": "一整行或一整列有共同数字因子时，可以先提到外面；玩家不需要计算倒数。"
+    },
+    "suggestedOps": [
+      {
+        "type": "scale",
+        "axis": "row",
+        "target": 0,
+        "factor": "1/2"
+      }
+    ]
+  },
+  {
+    "id": 65,
+    "title": "新手：A 键全部汇入第一列",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        0
+      ],
+      [
+        0,
+        2
+      ]
+    ],
+    "expected": "2",
+    "hint": "按A键，把第二列汇入第一列；它会像方块一样漂过去。",
+    "note": "第一列变成(1,2)，矩阵变成下三角，答案仍是2。",
+    "demoPrinciple": {
+      "title": "汇入是连续的倍加",
+      "text": "把其余列依次加到目标列，每次都是列倍加，行列式保持不变。"
+    },
+    "suggestedOps": [
+      {
+        "type": "sum",
+        "axis": "column",
+        "target": 0
+      }
+    ]
+  },
+  {
+    "id": 66,
+    "title": "新手：T 键转置",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "expected": "3",
+    "hint": "按T键转置；行列互换后仍然是同一个值。",
+    "note": "转置后变成下三角，主对角线乘积为3。",
+    "demoPrinciple": {
+      "title": "行和列是对称的",
+      "text": "转置只是把观察方向换了，线性变换的有向面积不变。"
+    },
+    "suggestedOps": [
+      {
+        "type": "transpose"
+      }
+    ]
+  },
+  {
+    "id": 67,
+    "title": "新手：按列倍加",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        0,
+        3
+      ]
+    ],
+    "expected": "3",
+    "hint": "选第二列为目标、第一列为来源，自动建议−2。",
+    "note": "C2←C2−2C1后成为对角矩阵。",
+    "demoPrinciple": {
+      "title": "列操作和行操作同样合法",
+      "text": "行列地位对称；列倍加也不会改变行列式。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "column",
+        "target": 1,
+        "source": 0,
+        "factor": "-2"
+      }
+    ]
+  },
+  {
+    "id": 68,
+    "title": "新手：零列出现，答案就是0",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2
+      ],
+      [
+        2,
+        4
+      ]
+    ],
+    "expected": "0",
+    "hint": "让第二列减去第一列的2倍，观察整列零。",
+    "note": "两列线性相关，平行四边形塌成线段。",
+    "demoPrinciple": {
+      "title": "零行或零列意味着体积归零",
+      "text": "只要一整行或一整列为0，所有排列项都含0，行列式必为0。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "column",
+        "target": 1,
+        "source": 0,
+        "factor": "-2"
+      }
+    ]
+  },
+  {
+    "id": 69,
+    "title": "新手：反三角只剩一条路线",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        0,
+        2
+      ],
+      [
+        3,
+        0
+      ]
+    ],
+    "expected": "-6",
+    "hint": "现在已经是反三角；直接读副对角线，并数一次交换。",
+    "note": "副对角线乘积6，排列21有1个逆序，所以答案−6。",
+    "demoPrinciple": {
+      "title": "排列符号来自交换次数",
+      "text": "反三角排列21需要一次交换恢复到12，因此符号为−1。"
+    },
+    "suggestedOps": []
+  },
+  {
+    "id": 70,
+    "title": "新手：三阶连续消元",
+    "family": "新手演示",
+    "difficulty": "入门",
+    "matrix": [
+      [
+        1,
+        2,
+        0
+      ],
+      [
+        2,
+        3,
+        1
+      ],
+      [
+        0,
+        1,
+        2
+      ]
+    ],
+    "expected": "-3",
+    "hint": "先消掉第二行第一列，再消掉第三行第二列。",
+    "note": "变成上三角后，1×(−1)×3=−3。",
+    "demoPrinciple": {
+      "title": "消元是在删掉排列路线",
+      "text": "每造出一个0，就会删掉一批不可能的排列项；最后只剩主对角线路线。"
+    },
+    "suggestedOps": [
+      {
+        "type": "add",
+        "axis": "row",
+        "target": 1,
+        "source": 0,
+        "factor": "-2"
+      },
+      {
+        "type": "add",
+        "axis": "row",
+        "target": 2,
+        "source": 1,
+        "factor": "1"
+      }
+    ]
   }
-,
-{
-  "id": 61,
-  "title": "新手：倍加把它变成三角形",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      1,
-      2
-    ],
-    [
-      3,
-      4
-    ]
-  ],
-  "expected": "-2",
-  "hint": "把第二行减去第一行的3倍，下面左侧就会变成0。",
-  "note": "三角矩阵的行列式等于主对角线乘积：1×(−2)=−2。",
-  "demoPrinciple": {
-    "title": "倍加不改变行列式",
-    "text": "把一行的倍数加到另一行，是剪切，不改变有向面积；造出三角形后，答案就是主对角线乘积。"
-  },
-  "suggestedOps": [
-    {
-      "type": "add",
-      "axis": "row",
-      "target": 1,
-      "source": 0,
-      "factor": "-3"
-    }
-  ]
-},
-{
-  "id": 62,
-  "title": "新手：交换一次，符号变了",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      0,
-      2
-    ],
-    [
-      3,
-      4
-    ]
-  ],
-  "expected": "-6",
-  "hint": "左上角是0，先交换两行，再读三角形。",
-  "note": "交换两行会让有向面积反向，所以外因子变成−1。",
-  "demoPrinciple": {
-    "title": "交换行会变号",
-    "text": "同一个平行四边形换了方向，面积大小不变，但有向面积的正负相反。"
-  },
-  "suggestedOps": [
-    {
-      "type": "swap",
-      "axis": "row",
-      "target": 0,
-      "source": 1
-    }
-  ]
-},
-{
-  "id": 63,
-  "title": "新手：一整行提出公因子",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      2,
-      4
-    ],
-    [
-      3,
-      5
-    ]
-  ],
-  "expected": "-2",
-  "hint": "先把第一行的2提出去，再用倍加消去左下角。",
-  "note": "一行乘2，行列式也乘2；外因子会替你记住这个2。",
-  "demoPrinciple": {
-    "title": "倍乘会同步改变因子",
-    "text": "一行放大几倍，有向面积也放大几倍；游戏会把这个倍率放在矩阵外。"
-  },
-  "suggestedOps": [
-    {
-      "type": "scale",
-      "axis": "row",
-      "target": 0,
-      "factor": "1/2"
-    },
-    {
-      "type": "add",
-      "axis": "row",
-      "target": 1,
-      "source": 0,
-      "factor": "-3"
-    }
-  ]
-},
-{
-  "id": 64,
-  "title": "新手：两列重复，面积归零",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      1,
-      2
-    ],
-    [
-      2,
-      4
-    ]
-  ],
-  "expected": "0",
-  "hint": "让第二列减去第一列的2倍，观察整列零。",
-  "note": "两列线性相关，平行四边形塌成线段，行列式为0。",
-  "demoPrinciple": {
-    "title": "两列相关就没有体积",
-    "text": "如果两列指向同一条方向，平行四边形被压扁；零列出现时，所有排列项都消失。"
-  },
-  "suggestedOps": [
-    {
-      "type": "add",
-      "axis": "column",
-      "target": 1,
-      "source": 0,
-      "factor": "-2"
-    }
-  ]
-},
-{
-  "id": 65,
-  "title": "新手：转置后仍是同一个数",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      1,
-      2
-    ],
-    [
-      3,
-      4
-    ]
-  ],
-  "expected": "-2",
-  "hint": "先转置，再把第二行的左下角消掉。",
-  "note": "转置只是把行列互换，行列式的有向面积不变。",
-  "demoPrinciple": {
-    "title": "det(Aᵀ)=det(A)",
-    "text": "交换行与列相当于从另一个方向观察同一块有向面积；数值不变。"
-  },
-  "suggestedOps": [
-    {
-      "type": "transpose"
-    },
-    {
-      "type": "add",
-      "axis": "row",
-      "target": 1,
-      "source": 0,
-      "factor": "-2"
-    }
-  ]
-},
-{
-  "id": 66,
-  "title": "新手：三阶消元读对角线",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      2,
-      1,
-      0
-    ],
-    [
-      3,
-      4,
-      5
-    ],
-    [
-      0,
-      6,
-      7
-    ]
-  ],
-  "expected": "-25",
-  "hint": "先消掉第二行第一列，再用新的第二行消掉第三行第二列。",
-  "note": "最后得到上三角，主对角线2、5/2、−5相乘得−25。",
-  "demoPrinciple": {
-    "title": "三角形让排列展开只剩一条路",
-    "text": "零把不合法的选取全部堵住，只剩每行每列各选一次的主对角线。"
-  },
-  "suggestedOps": [
-    {
-      "type": "add",
-      "axis": "row",
-      "target": 1,
-      "source": 0,
-      "factor": "-3/2"
-    },
-    {
-      "type": "add",
-      "axis": "row",
-      "target": 2,
-      "source": 1,
-      "factor": "-12/5"
-    }
-  ]
-},
-{
-  "id": 67,
-  "title": "新手：反三角的排列符号",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      0,
-      0,
-      1
-    ],
-    [
-      0,
-      2,
-      0
-    ],
-    [
-      3,
-      0,
-      0
-    ]
-  ],
-  "expected": "-6",
-  "hint": "唯一非零路线沿副对角线，先数它经过了几次交换。",
-  "note": "副对角线排列321有3个逆序，所以符号为−1。",
-  "demoPrinciple": {
-    "title": "交换次数决定正负",
-    "text": "反三角不是主对角线；从321恢复到123需要3次交换，因此多一个负号。"
-  },
-  "suggestedOps": []
-},
-{
-  "id": 68,
-  "title": "新手：下三角转成上三角",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      1,
-      0,
-      0
-    ],
-    [
-      2,
-      3,
-      0
-    ],
-    [
-      4,
-      5,
-      6
-    ]
-  ],
-  "expected": "18",
-  "hint": "转置后成为上三角，直接读主对角线。",
-  "note": "1×3×6=18；转置前后行列式相同。",
-  "demoPrinciple": {
-    "title": "三角矩阵的核心公式",
-    "text": "三角矩阵里，主对角线以外的元素不会参与唯一有效排列。"
-  },
-  "suggestedOps": [
-    {
-      "type": "transpose"
-    }
-  ]
-},
-{
-  "id": 69,
-  "title": "新手：唯一非零排列",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      0,
-      2,
-      0
-    ],
-    [
-      1,
-      0,
-      0
-    ],
-    [
-      0,
-      0,
-      3
-    ]
-  ],
-  "expected": "-6",
-  "hint": "交换前两行，把唯一的非零路线放到主对角线。",
-  "note": "交换产生−1，主对角线乘积为6，所以结果−6。",
-  "demoPrinciple": {
-    "title": "排列展开是选择路线",
-    "text": "每一项都要从每行每列选一个元素；零把路线删掉后，只剩一条。"
-  },
-  "suggestedOps": [
-    {
-      "type": "swap",
-      "axis": "row",
-      "target": 0,
-      "source": 1
-    }
-  ]
-},
-{
-  "id": 70,
-  "title": "新手：按列做同样的消元",
-  "family": "新手演示",
-  "difficulty": "入门",
-  "matrix": [
-    [
-      1,
-      2
-    ],
-    [
-      3,
-      4
-    ]
-  ],
-  "expected": "-2",
-  "hint": "让第二列减去第一列的2倍，再读下三角。",
-  "note": "行与列地位对称，列倍加同样不改变行列式。",
-  "demoPrinciple": {
-    "title": "行列是对称的",
-    "text": "列操作与行操作遵循同一套公理；这是转置不变性的直接体现。"
-  },
-  "suggestedOps": [
-    {
-      "type": "add",
-      "axis": "column",
-      "target": 1,
-      "source": 0,
-      "factor": "-2"
-    }
-  ]
-}
 ];

@@ -8,7 +8,7 @@
   const pretty=s=>String(s).replace(/([RC])([1-6])/g,(_,a,b)=>a.toLowerCase()+sub[Number(b)-1]).replace(/\+ \(-1\)/g,'− ').replace(/\+ \(1\)/g,'+ ').replace(/-/g,'−');
   let history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}],index=0;
   let axis='column',target=0,source=1,type='add',numeric=false,x=2,preview=false,compact=false,won=false;
-  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false, answerCandidate=null;
+  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false, answerCandidate=null, manualCoefficient=false, longPressTimer=null, longPressFired=false;
   S.init();
   const current=()=>history[index].state;
   const n=()=>current().matrix.length;
@@ -17,6 +17,15 @@
   const levelLabel=()=>String(levelIndex()).padStart(2,'0');
   const linePolys=()=>{const s=current();return axis==='row'?s.matrix[target]:s.matrix.map(row=>row[target]);};
   const factorInfo=()=>{const line=linePolys();if(!line.length||line.every(p=>p.every(E.isZero)))return null;const hasX=line.every(p=>p.length>1&&E.isZero(p[0]));if(hasX)return {kind:'x',value:'x',label:'提取 x'};if(line.some(p=>p.length!==1))return null;let nums=line.map(p=>p[0]).filter(v=>!E.isZero(v));if(!nums.length)return null;const abs=v=>E.compare(v,0)<0?E.neg(v):v;const gcd=(a,b)=>{a=BigInt(a);b=BigInt(b);while(b){const t=a%b;a=b;b=t;}return a<0n?-a:a};const lcm=(a,b)=>a/gcd(a,b)*b;let gn=0n,ld=1n;for(const v of nums){const f=E.parse(v);const nn=BigInt(f.n<0?'-'+f.n.slice(1):f.n),dd=BigInt(f.d);gn=gn?gcd(gn,nn):nn;ld=lcm(ld,dd);}const factor=E.parse(gn.toString()+'/'+ld.toString());if(E.eq(factor,1)||E.eq(factor,-1))return null;return {kind:'constant',value:E.fmt(factor),label:'提取公因子 '+E.fmt(factor)};};
+  function autoFactor(){
+    if(type==='add'){
+      const s=current().matrix, targetLine=axis==='row'?s[target]:s.map(row=>row[target]), sourceLine=axis==='row'?s[source]:s.map(row=>row[source]);
+      for(let i=0;i<targetLine.length;i++){const a=targetLine[i],b=sourceLine[i];if(a.length===1&&b.length===1&&!E.isZero(a[0])&&!E.isZero(b[0]))return E.div(E.neg(a[0]),b[0]);}
+    }
+    if(type==='scale'){const line=linePolys();for(const p of line){if(p.length===1&&!E.isZero(p[0]))return E.div(1,p[0]);}}
+    return null;
+  }
+  function syncCoefficient(){if(manualCoefficient||!['add','scale'].includes(type))return;const k=autoFactor();if(k){$('coefficient').value=E.fmt(k);$('coefficientHelp').textContent='已自动计算；可按“自动计算”重新同步。';}else{$('coefficientHelp').textContent='当前选项不能自动确定倍数；可手动输入整数或分数。';}}
   const effectiveOp=()=>{const base=op(),info=type==='extractX'?factorInfo():null;if(type==='extractX'&&info?.kind==='constant'){base.type='scale';base.factor=E.fmt(E.div(1,info.value));}return base;};
   function armIdle(){clearTimeout(idleTimer);demoVisible=false;$('demoAssist').hidden=true;$('demoPanel').hidden=true;idleTimer=setTimeout(()=>{demoVisible=true;$('demoAssist').hidden=false;feedback('已经尝试一分钟了。需要时可以打开黄色的最短演示；也可以继续自己探索。');},60000);}
   function resetIdle(){armIdle();}
@@ -38,6 +47,7 @@
   function labelForOp(){const a=(axis==='row'?'r':'c'),t=a+sub[target],s=a+sub[source],k=$('coefficient').value.trim()||'?';return {add:`${t} ← ${t} + (${k})${s}`,sum:`${t} ← ${indices().map(i=>a+sub[i]).join(' + ')}`,swap:`${t} ↔ ${s}`,scale:`${t} ← (${k})${t}`,extractX:(factorInfo()?.label||`从 ${t} 提取公因子`),transpose:'行 ↔ 列；D 不变'}[type];}
   function describe(){const v=candidate();$('operationPreview').textContent=v.move?pretty(v.move.label):labelForOp();$('operationReason').textContent=v.move?v.move.reason:v.error;$('operationReason').classList.toggle('error',!!v.error);$('formula').textContent=preview?(v.error?'这一步暂不可用':pretty(v.move.label)):(index?pretty(history[index].label):'选择位置，再选择一个动作。');return v;}
   function render(){
+    syncCoefficient();
     const state=current(),v=describe(),shown=preview&&v.move?v.move.state:state,withSource=type==='add'||type==='swap';
     $('boardWrap').style.setProperty('--n',n());
     $('boardWrap').classList.toggle('order-5',n()>=5);
@@ -72,9 +82,17 @@
     $('matrix').classList.toggle('success',won);$('result').hidden=!(won||answerCandidate);$('answerGate').hidden=!(answerCandidate&&!won);if(answerCandidate&&!won){$('answerFeedback').textContent='结构已读出，请填写答案后进入下一关。';}
     updateSound(); renderBank();
   }
+  function startLongPress(e, element){const b=e.target.closest('[data-axis]')||e.target.closest('[data-r]');if(!b)return;if(e.button!==undefined&&e.button!==0&&e.button!==2)return;clearTimeout(longPressTimer);longPressFired=false;longPressTimer=setTimeout(()=>{longPressFired=true;const sourcePick=e.button===2;if(b.dataset.axis)selected(b.dataset.axis,Number(b.dataset.index),sourcePick);else selected(axis,Number(b.dataset[axis==='row'?'r':'c']),sourcePick);feedback(`长按已选中整${(b.dataset.axis||axis)==='row'?'行':'列'}，可以直接操作。`,'good');element?.classList.add('long-pressed');S.play('select');},420);}
+  function endLongPress(element){clearTimeout(longPressTimer);if(element)setTimeout(()=>element.classList.remove('long-pressed'),520);}
   function selected(a,i,isSource=false){axis=a;if(isSource){source=i;if(source===target)target=(source+1)%n();}else{target=i;if(source===target)source=(target+1)%n();}preview=false;render();S.play('select');}
+  function addMotionGhosts(oldState,operation){
+    if(reduced.matches||!['add','sum'].includes(operation.type))return;
+    const wrap=$('boardWrap'),matrix=$('matrix'),layer=document.createElement('div');layer.className='motion-layer';wrap.appendChild(layer);const wr=wrap.getBoundingClientRect(),sources=operation.type==='sum'?indices().filter(i=>i!==operation.target):[operation.source];let ghostIndex=0;
+    for(const sourceLine of sources){for(let i=0;i<n();i++){const r=operation.axis==='row'?sourceLine:i,c=operation.axis==='column'?sourceLine:i,tr=operation.axis==='row'?operation.target:i,tc=operation.axis==='column'?operation.target:i;const from=matrix.querySelector(`[data-r="${r}"][data-c="${c}"]`),to=matrix.querySelector(`[data-r="${tr}"][data-c="${tc}"]`);if(!from||!to)continue;const fr=from.getBoundingClientRect(),toRect=to.getBoundingClientRect(),ghost=document.createElement('div');ghost.className='motion-ghost';ghost.textContent=G.format(oldState.matrix[r][c]);ghost.style.left=(fr.left-wr.left)+'px';ghost.style.top=(fr.top-wr.top)+'px';ghost.style.width=fr.width+'px';ghost.style.height=fr.height+'px';ghost.style.setProperty('--dx',(toRect.left-fr.left)+'px');ghost.style.setProperty('--dy',(toRect.top-fr.top)+'px');ghost.style.setProperty('--delay',(ghostIndex*42)+'ms');layer.appendChild(ghost);to.classList.add('target-pulse');ghostIndex++;}}
+    setTimeout(()=>{layer.remove();matrix.querySelectorAll('.target-pulse').forEach(el=>el.classList.remove('target-pulse'));},900+ghostIndex*42);
+  }
   function animate(move,oldState,operation){
-    clearTimeout(animationTimer);$('actionArrows').innerHTML='';if(reduced.matches)return;
+    clearTimeout(animationTimer);$('actionArrows').innerHTML='';if(reduced.matches)return;addMotionGhosts(oldState,operation);
     const wrap=$('boardWrap'),style=getComputedStyle(wrap),cell=parseFloat(style.getPropertyValue('--cell')),row=parseFloat(style.getPropertyValue('--row'));
     move.affected.forEach(({r,c},i)=>{const el=$('matrix').querySelector(`[data-r="${r}"][data-c="${c}"]`);if(!el)return;const newZero=zero(move.state.matrix[r][c])&&!zero(oldState.matrix[r][c]);el.classList.add(newZero?'new-zero':'changed');let dx=0,dy=0;
       if(operation.type==='transpose'){dx=(r-c)*cell;dy=(c-r)*row;}
@@ -106,14 +124,15 @@
   }
   function travel(i){if(i<0||i>=history.length||i===index)return;const backwards=i<index;index=i;preview=false;won=false;answerCandidate=null;resetIdle();persist();render();feedback(`${backwards?'退回':'恢复'}到第 ${index} 步。${history[index].reason}`);S.play('undo');}
   $('apply').addEventListener('click',apply);
-  $('operations').addEventListener('click',e=>{const b=e.target.closest('[data-op]');if(!b||b.disabled)return;type=b.dataset.op;preview=false;if(type==='extractX'&&factorInfo())apply();else{render();S.play('select');}});
-  $('axis').addEventListener('change',e=>{axis=e.target.value;preview=false;render();S.play('select');});
-  $('target').addEventListener('change',e=>selected(axis,Number(e.target.value)));
-  $('source').addEventListener('change',e=>selected(axis,Number(e.target.value),true));
-  document.querySelectorAll('.column-handles,.row-handles').forEach(el=>{el.addEventListener('click',e=>{const b=e.target.closest('[data-axis]');if(b)selected(b.dataset.axis,Number(b.dataset.index),false);});el.addEventListener('contextmenu',e=>{e.preventDefault();const b=e.target.closest('[data-axis]');if(b)selected(b.dataset.axis,Number(b.dataset.index),true);});});
-  $('matrix').addEventListener('click',e=>{const c=e.target.closest('[data-r]');if(c)selected(axis,Number(c.dataset[axis==='row'?'r':'c']),false);});
+  $('operations').addEventListener('click',e=>{const b=e.target.closest('[data-op]');if(!b||b.disabled)return;type=b.dataset.op;manualCoefficient=false;preview=false;if(type==='extractX'&&factorInfo())apply();else{render();S.play('select');if(type==='scale')$('coefficient').select();}});
+  $('axis').addEventListener('change',e=>{axis=e.target.value;manualCoefficient=false;preview=false;render();S.play('select');});
+  $('target').addEventListener('change',e=>{manualCoefficient=false;selected(axis,Number(e.target.value));});
+  $('source').addEventListener('change',e=>{manualCoefficient=false;selected(axis,Number(e.target.value),true);});
+  document.querySelectorAll('.column-handles,.row-handles').forEach(el=>{el.addEventListener('pointerdown',e=>startLongPress(e,el));el.addEventListener('pointerup',()=>endLongPress(el));el.addEventListener('pointercancel',()=>endLongPress(el));el.addEventListener('click',e=>{if(longPressFired){longPressFired=false;e.preventDefault();return;}const b=e.target.closest('[data-axis]');if(b)selected(b.dataset.axis,Number(b.dataset.index),false);});el.addEventListener('contextmenu',e=>{e.preventDefault();const b=e.target.closest('[data-axis]');if(b)selected(b.dataset.axis,Number(b.dataset.index),true);});});
+  $('matrix').addEventListener('pointerdown',e=>startLongPress(e,$('matrix')));$('matrix').addEventListener('pointerup',()=>endLongPress($('matrix')));$('matrix').addEventListener('pointercancel',()=>endLongPress($('matrix')));
+  $('matrix').addEventListener('click',e=>{if(longPressFired){longPressFired=false;e.preventDefault();return;}const c=e.target.closest('[data-r]');if(c)selected(axis,Number(c.dataset[axis==='row'?'r':'c']),false);});
   $('matrix').addEventListener('contextmenu',e=>{e.preventDefault();const c=e.target.closest('[data-r]');if(c)selected(axis,Number(c.dataset[axis==='row'?'r':'c']),true);});
-  $('coefficient').maxLength=12;$('coefficient').addEventListener('input',()=>{if(preview)render();else describe();});
+  $('coefficient').maxLength=12;$('coefficient').addEventListener('input',()=>{manualCoefficient=true;if(preview)render();else describe();});$('coefficientAuto').addEventListener('click',()=>{manualCoefficient=false;syncCoefficient();describe();$('coefficient').focus();});
   $('coefficient').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();}});
   $('previewToggle').addEventListener('click',()=>{preview=!preview;render();if(preview&&candidate().error)feedback(candidate().error,'error');else feedback(preview?'这只是预览，还没有改变你的路线。':'已回到当前状态。');});
   $('numericMode').addEventListener('click',()=>{numeric=true;render();});$('symbolicMode').addEventListener('click',()=>{numeric=false;render();});
@@ -139,7 +158,7 @@
   }else{$('dialogTitle').textContent=dialogs[name].title;$('dialogContent').innerHTML=dialogs[name].html;}$('infoDialog').showModal();}));
   $('closeDialog').addEventListener('click',()=>$('infoDialog').close());$('infoDialog').addEventListener('close',()=>dialogTrigger?.focus());
   $('infoDialog').addEventListener('click',e=>{if(e.target!==$('infoDialog'))return;const r=$('infoDialog').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('infoDialog').close();});
-  document.addEventListener('keydown',e=>{if($('infoDialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();travel(index+(e.shiftKey?1:-1));return;}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();travel(index+1);return;}if(e.ctrlKey||e.metaKey||e.altKey)return;if(k==='t'){e.preventDefault();type='transpose';apply();}else if(k==='a'){e.preventDefault();axis='column';target=0;type='sum';source=source===0?1:source;apply();}else if(k==='r'){e.preventDefault();axis='row';render();feedback('已切换为按行操作。');}else if(k==='c'){e.preventDefault();axis='column';render();feedback('已切换为按列操作。');}else if(k==='m'){e.preventDefault();type='add';render();feedback('已选择倍加；左键目标，右键来源。');}else if(k==='x'){e.preventDefault();type='extractX';if(factorInfo())apply();else{render();feedback('当前选中行列没有可提取的公因子。','error');}}else if(k==='s'){e.preventDefault();type='swap';render();feedback('已选择交换；左键目标，右键来源。');}else if(k==='v'){e.preventDefault();$('reset').click();}});
+  document.addEventListener('keydown',e=>{if($('infoDialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();travel(index+(e.shiftKey?1:-1));return;}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();travel(index+1);return;}if(e.ctrlKey||e.metaKey||e.altKey)return;if(k==='t'){e.preventDefault();type='transpose';apply();}else if(k==='a'){e.preventDefault();axis='column';target=0;type='sum';source=source===0?1:source;apply();}else if(k==='r'){e.preventDefault();axis='row';render();feedback('已切换为按行操作。');}else if(k==='c'){e.preventDefault();axis='column';render();feedback('已切换为按列操作。');}else if(k==='m'){e.preventDefault();type='add';manualCoefficient=false;render();feedback('已选择倍加；左键目标，右键来源。');}else if(k==='x'){e.preventDefault();type='extractX';if(factorInfo())apply();else{render();feedback('当前选中行列没有可提取的公因子。','error');}}else if(k==='s'){e.preventDefault();type='swap';apply();}else if(k==='v'){e.preventDefault();$('reset').click();}});
   $('showDemo').addEventListener('click',()=>{const ops=problem.suggestedOps||[];$('demoPanel').hidden=false;$('demoPanel').innerHTML='<strong>最短参考路线</strong>'+ops.map((item,i)=>`<div class="demo-step"><b>${i+1}</b><span>${esc(item.type==='extractX'?'提取 x':item.type==='sum'?'全部汇入':item.type==='transpose'?'转置':item.type==='swap'?'交换':item.type==='scale'?'倍乘':'倍加')} · ${item.axis?((item.axis==='row'?'R':'C')+(item.target+1)):''}</span></div>`).join('')+'<small>这是参考路线，不会替你执行。</small>';$('showDemo').textContent='已显示最短演示';S.play('select');});
   $('bankToggle').addEventListener('click',()=>{const open=$('bankToggle').getAttribute('aria-expanded')==='true';$('bankToggle').setAttribute('aria-expanded',String(!open));$('bankToggle').innerHTML=open?'选择关卡 <span>⌄</span>':'收起题库 <span>⌃</span>';$('bankMenu').hidden=open;document.querySelector('.bank-sidebar').classList.toggle('bank-open',!open);});
   function openTutorial(){if(levelIndex()!==1)return;let seen=false;try{seen=localStorage.getItem('det-lab-tutorial-v1')==='seen';}catch{}if(!seen){$('tutorialOverlay').hidden=false;document.body.classList.add('tutorial-active');}}
@@ -161,7 +180,7 @@
     if(id===problem.id)return;persist();const next=problems.find(p=>p.id===id);if(!next)return;
     problem=next;const route=savedGames[id];
     try{if(!route||!G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected))throw new Error();history=route.history;index=route.index;}catch{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'原始题目。'}];index=0;}
-    axis='column';target=0;source=1;type='add';numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
+    axis='column';target=0;source=1;type='add';numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;if(levelIndex()===1){axis='row';target=1;source=0;}resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
   }
   $('bankFilter').innerHTML='<option value="all">全部题型</option>'+[...new Set(problems.map(p=>p.family))].map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
   $('problemPicker').innerHTML=problems.map((p,i)=>`<option value="${p.id}">${String(i+1).padStart(2,'0')} · ${esc(p.title)}</option>`).join('');
@@ -169,6 +188,6 @@
   $('problemList').addEventListener('click',e=>{const b=e.target.closest('[data-problem]');if(b)switchProblem(Number(b.dataset.problem));});
   $('previousProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)-1]?.id));
   $('nextProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)+1]?.id));
-  render();armIdle();openTutorial();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
+  if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}render();armIdle();openTutorial();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
 })();
 
