@@ -8,7 +8,7 @@
   const pretty=s=>String(s).replace(/([RC])([1-6])/g,(_,a,b)=>a.toLowerCase()+sub[Number(b)-1]).replace(/\+ \(-1\)/g,'− ').replace(/\+ \(1\)/g,'+ ').replace(/-/g,'−');
   let history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}],index=0;
   let axis='column',target=0,source=1,type='add',numeric=false,x=2,preview=false,compact=false,won=false;
-  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false, answerCandidate=null, manualCoefficient=false, longPressTimer=null, longPressFired=false, tourStep=1, tourActive=false;
+  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false, answerCandidate=null, manualCoefficient=false, longPressTimer=null, longPressFired=false, tourStep=1, tourActive=false, laplaceInfo=null, definitionSelection=[];
   S.init();
   const current=()=>history[index].state;
   const n=()=>current().matrix.length;
@@ -45,6 +45,35 @@
   }
   function candidate(){try{return {move:G.apply(current(),effectiveOp())};}catch(e){return {error:e.message};}}
   function feedback(text,kind=''){clearTimeout(toastTimer);$('feedback').textContent=text;$('feedback').className='play-feedback'+(kind?' is-'+kind:'');}
+  function specialPanel(){
+    const card=$('principleCard'); let panel=card.querySelector('.math-special-panel');
+    if(!panel){panel=document.createElement('div');panel.className='math-special-panel';panel.setAttribute('aria-live','polite');card.appendChild(panel);}
+    return panel;
+  }
+  function renderSpecialPanel(){
+    const panel=specialPanel();
+    if(problem.special==='cos-tridiagonal'){
+      const q=G.cosTridiagonal(problem.n), samples=Object.entries(problem.numericSamples||{}).map(([c,v])=>`c=${esc(c)} → ${esc(v)}`).join(' · ');
+      panel.hidden=false;panel.dataset.special='cos-tridiagonal';panel.innerHTML=`<div class="special-kicker">带状结构 · 可验证的递推</div><div class="special-formula"><strong>${esc(q.recurrence)}</strong><span>${esc(q.closedForm)}</span><small>${esc(problem.formulaVariable||q.parameter)}　${samples}</small></div>`;
+      return;
+    }
+    if(String(problem.family||'').includes('范德蒙')){
+      panel.hidden=false;panel.dataset.special='vandermonde';panel.innerHTML='<div class="special-kicker">范德蒙识别卡</div><div class="special-formula"><strong>∏<sub>i&lt;j</sub>(x<sub>j</sub>−x<sub>i</sub>)</strong><span>先排幂次，再看节点差；每次交换都记一个逆序。</span></div>';return;
+    }
+    if(laplaceInfo&&laplaceInfo.problemId===problem.id){renderLaplacePanel(laplaceInfo);return;}
+    panel.hidden=true;panel.removeAttribute('data-special');
+  }
+  function renderLaplacePanel(info){
+    const panel=specialPanel(); if(!info){panel.hidden=true;return;} panel.hidden=false;panel.dataset.special='laplace';
+    const axisText=info.axis==='row'?'行':'列', terms=info.terms.map((term,i)=>`<li class="laplace-term" data-term="${i}"><b>${axisText}${term[axisText==='行'?'column':'row']+1}</b><span>${G.format(term.element)} · ${term.sign<0?'−':'+'} Cof</span><em>${G.format(term.value)}</em></li>`).join('');
+    panel.innerHTML=`<div class="special-kicker">拉普拉斯展开 · ${axisText}${info.index+1}</div><div class="laplace-blocks"><div class="laplace-intro">沿选定${axisText}，每个元素飞向自己的余子式；删除所在行与列后，剩下一个 ${info.terms[0]?.minor.length||0} 阶块。</div><ol>${terms}</ol><strong class="laplace-total">总和：${G.format(info.total)}</strong></div>`;
+    panel.querySelectorAll('.laplace-term').forEach((el,i)=>{el.style.setProperty('--delay',`${i*80}ms`);});
+  }
+  function showLaplace(info){
+    laplaceInfo={...info,problemId:problem.id};
+    document.querySelectorAll('#matrix .play-cell').forEach(cell=>{const r=Number(cell.dataset.r),c=Number(cell.dataset.c);const on=info.axis==='row'?r===info.index:c===info.index;cell.classList.toggle('laplace-focus',on);cell.classList.toggle('laplace-muted',!on);});
+    renderSpecialPanel();
+  }
   function labelForOp(){const a=(axis==='row'?'r':'c'),t=a+sub[target],s=a+sub[source],k=$('coefficient').value.trim()||'?';return {add:`${t} ← ${t} + (${k})${s}`,sum:`${t} ← ${indices().map(i=>a+sub[i]).join(' + ')}`,swap:`${t} ↔ ${s}`,scale:`${t} ← (${k})${t}`,extractX:(factorInfo()?.label||`从 ${t} 提取公因子`),transpose:'行 ↔ 列；D 不变'}[type];}
   function describe(){const v=candidate();$('operationPreview').textContent=v.move?pretty(v.move.label):labelForOp();$('operationReason').textContent=v.move?v.move.reason:v.error;$('operationReason').classList.toggle('error',!!v.error);$('formula').textContent=preview?(v.error?'这一步暂不可用':pretty(v.move.label)):(index?pretty(history[index].label):'选择位置，再选择一个动作。');return v;}
   function render(){
@@ -81,6 +110,7 @@
     const st=G.structure(shown),ready=st.type!=='none';$('stage').classList.toggle('readable',ready);$('structureText').textContent=st.description;$('readResult').classList.toggle('ready',ready);$('readResult').disabled=preview;$('readResult').firstChild.textContent=preview?'退出预览后读取结果 ':'我能读出结果了 ';
     $('stageCaption').textContent=preview?'预览：深色格子是这个动作将产生的结果。':ready?'结构已经可以读值；也可以继续尝试另一种化简。':numeric?'数值在变化；下方统计仍按符号结构计算。':`已选${axis==='row'?'行':'列'} ${axis==='row'?'r':'c'}${sub[target]} 为目标，你可以随时换位置。`;
     $('matrix').classList.toggle('success',won);$('saveMoment').hidden=!won;$('result').hidden=!(won||answerCandidate);$('answerGate').hidden=!(answerCandidate&&!won);if(answerCandidate&&!won){$('answerFeedback').textContent='结构已读出，请填写答案后进入下一关。';}
+    renderSpecialPanel();
     updateSound(); renderBank();
   }
   function startLongPress(e, element){const b=e.target.closest('[data-axis]')||e.target.closest('[data-r]');if(!b)return;if(e.button!==undefined&&e.button!==0&&e.button!==2)return;clearTimeout(longPressTimer);longPressFired=false;longPressTimer=setTimeout(()=>{longPressFired=true;const sourcePick=e.button===2;if(b.dataset.axis)selected(b.dataset.axis,Number(b.dataset.index),sourcePick);else selected(axis,Number(b.dataset[axis==='row'?'r':'c']),sourcePick);feedback(`长按已选中整${(b.dataset.axis||axis)==='row'?'行':'列'}，可以直接操作。`,'good');element?.classList.add('long-pressed');S.play('select');},420);}
@@ -111,11 +141,14 @@
   }
   function apply(){
     const requestedType=type,extractedInfo=requestedType==='extractX'?factorInfo():null,before=current(),operation=effectiveOp();let move;
-    try{move=operation.type==='laplace'?{state:before,label:'按行展开',reason:'选中一行/列后按拉普拉斯展开；余子式会逐块出现。',affected:[],direction:operation.axis}:G.apply(before,operation);}catch(e){preview=false;render();feedback(e.message,'error');S.play('invalid');return;}
+    if(operation.type==='laplace'){
+      try{const expansion=G.cofactorExpansion(before,operation.axis,operation.target);showLaplace(expansion);feedback(`拉普拉斯展开已沿${operation.axis==='row'?'行':'列'}${operation.target+1}铺开；看每个元素对应的余子式。`,'good');S.play('select');$('srStatus').textContent='拉普拉斯展开：'+G.format(expansion.total);return;}
+      catch(e){feedback(e.message,'error');S.play('invalid');return;}
+    }
+    try{move=G.apply(before,operation);}catch(e){preview=false;render();feedback(e.message,'error');S.play('invalid');return;}
     if(requestedType==='extractX'&&extractedInfo?.kind==='constant'){move.label='从 '+(axis==='row'?'r':'c')+(target+1)+' 提取公因子 '+extractedInfo.value;move.reason='目标'+(axis==='row'?'行':'列')+'的每个元素都含公因子 '+extractedInfo.value+'，一键提出；外因子同步补偿。';}
-    if(operation.type==='laplace'){feedback('拉普拉斯展开演示已就绪；下一步可以选择行或列查看余子式。','good');S.play('select');return;}
     if(JSON.stringify(move.state)===JSON.stringify(before)){feedback('这个动作没有改变结构。你仍然可以换一个倍数或位置。');S.play('select');return;}
-    history=history.slice(0,index+1);history.push({state:move.state,label:move.label,reason:move.reason});index++;if(requestedType==='extractX')type='add';answerCandidate=null;resetIdle();
+    history=history.slice(0,index+1);history.push({state:move.state,label:move.label,reason:move.reason});index++;if(requestedType==='extractX')type='add';answerCandidate=null;laplaceInfo=null;resetIdle();
     preview=false;won=false;persist();render();
     if(tourActive&&tourStep===4)advanceTour();
     const delta=G.zeros(move.state)-G.zeros(before),terms=countTerms(move.state.matrix);
@@ -152,15 +185,38 @@
   let exitShown=false;
   function saveMoment(){const canvas=document.createElement('canvas');canvas.width=1200;canvas.height=700;const ctx=canvas.getContext('2d');ctx.fillStyle='#f7f7f5';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#252623';ctx.font='32px Segoe UI';ctx.fillText(`行列之间 · 第 ${levelLabel()} 关`,70,75);ctx.font='22px Cambria Math';ctx.fillText(`D = ${G.format(answerCandidate||G.determinantPolynomial(current()))}`,70,120);ctx.strokeStyle='#252623';ctx.lineWidth=2;const a=current().matrix,n=a.length,cell=Math.min(95,420/n);const left=(canvas.width-cell*n)/2,top=190;ctx.strokeRect(left-10,top-10,cell*n+20,cell*n+20);ctx.font='26px Cambria Math';ctx.textAlign='center';ctx.textBaseline='middle';for(let r=0;r<n;r++)for(let c=0;c<n;c++)ctx.fillText(G.format(a[r][c]),left+c*cell+cell/2,top+r*cell+cell/2);const link=document.createElement('a');link.download=`determinant-level-${levelLabel()}.png`;link.href=canvas.toDataURL('image/png');link.click();S.play('success');}
   $('saveMoment').addEventListener('click',saveMoment);
-  $('definitionMode').addEventListener('click',()=>{if(!$('infoDialog').open){$('dialogTitle').textContent='定义模式 · 每一行选一个，每一列只能选一次';$('dialogContent').innerHTML='<p>行列式展开的每一项，都从每一行选择一个元素，同时不能重复使用同一列。</p><ol><li>先选第1行的列，再选第2行剩下的列。</li><li>每选择一次，剩余可选格会减少；选中路线会高亮。</li><li>排列的逆序数决定正负号，最后把乘积项相加。</li></ol><div class="callout">消元把大量路线变成0，三角结构只留下主对角线那一条路线。</div>';$('infoDialog').showModal();}});
+  function openDefinition(){
+    definitionSelection=[]; const state=current(), terms=G.permutationTerms(state), size=n();
+    $('dialogTitle').textContent='定义模式 · 每一行选一个，每一列只能选一次';
+    $('dialogContent').innerHTML=`<p>现在不靠“读三角”，而是亲手走一条排列路线：第 <b id="definitionCount">0</b> / ${size} 行。每一列只能用一次。</p><div class="definition-grid" style="--n:${size}" data-definition-grid>${state.matrix.map((row,r)=>row.map((p,c)=>`<button class="definition-cell" data-definition-cell data-row="${r}" data-col="${c}" ${r?'disabled':''}>a<sub>${r+1}${c+1}</sub><small>${G.format(p,{html:true})}</small></button>`).join('')).join('')}</div><div class="definition-route" id="definitionRoute">先从第 1 行选一个元素。</div><div class="definition-result" id="definitionResult"></div><div class="callout">逆序数决定正负号；消元把许多路线的某个格子变成 0，所以最后常常只剩一条路。</div>`;
+    $('infoDialog').showModal();
+    const grid=$('dialogContent').querySelector('[data-definition-grid]'), route=$('definitionRoute'), result=$('definitionResult'), count=$('definitionCount');
+    function refresh(){
+      const used=new Set(definitionSelection.map(x=>x.col)); count.textContent=definitionSelection.length;
+      grid.querySelectorAll('[data-definition-cell]').forEach(btn=>{const r=Number(btn.dataset.row),c=Number(btn.dataset.col),selected=definitionSelection.some(x=>x.row===r&&x.col===c);btn.classList.toggle('is-picked',selected);btn.disabled=r!==definitionSelection.length || used.has(c);});
+      route.textContent=definitionSelection.length< size?`路线：${definitionSelection.map(x=>`a${x.row+1}${x.col+1}`).join(' · ')} · 还需要从第 ${definitionSelection.length+1} 行选一个。`:'路线已闭合：每一行、每一列各取一个元素。';
+      if(definitionSelection.length===size){const permutation=definitionSelection.map(x=>x.col), picked=terms.find(t=>t.permutation.every((c,r)=>c===permutation[r])), inv=picked?.inversions??0;result.innerHTML=`<strong>路线完成</strong>　逆序数 = ${inv}　符号 = ${inv%2?'−1':'＋1'}　乘积 = ${picked?G.format(picked.product):'0'}　贡献 = ${picked?G.format(picked.value):'0'}`;grid.querySelectorAll('[data-definition-cell]').forEach(btn=>btn.disabled=true);S.play('success');}
+    }
+    grid.addEventListener('click',e=>{const btn=e.target.closest('[data-definition-cell]');if(!btn||btn.disabled)return;const row=Number(btn.dataset.row),col=Number(btn.dataset.col);if(row!==definitionSelection.length||definitionSelection.some(x=>x.col===col))return;definitionSelection.push({row,col});refresh();S.play('select');});
+    refresh();
+  }
+  $('definitionMode').addEventListener('click',openDefinition);
   document.addEventListener('mouseout',e=>{if(e.relatedTarget||e.clientY>0||index<1||won||exitShown)return;exitShown=true;try{if(sessionStorage.getItem('det-lab-exit-v1')==='seen')return;sessionStorage.setItem('det-lab-exit-v1','seen');}catch{}$('exitModal').showModal();});$('exitContinue').addEventListener('click',()=>$('exitModal').close());$('exitOkay').addEventListener('click',()=>$('exitModal').close());
   function updateSound(){const on=S.isEnabled();$('soundToggle').setAttribute('aria-pressed',String(on));$('soundToggle').lastElementChild.textContent=on?'音效开':'音效关';}
   $('soundToggle').addEventListener('click',()=>{S.setEnabled(!S.isEnabled());updateSound();if(S.isEnabled())S.play('select');});window.addEventListener('labsoundchange',updateSound);
   let dialogTrigger=null;
   let demoTimer=null,demoState=null,demoIndex=0,demoOps=[];
   function renderDemoState(){if(!demoState)return;$('demoMatrix').style.setProperty('--demo-n',demoState.matrix.length);$('demoMatrix').innerHTML=demoState.matrix.map(row=>row.map(poly=>`<span>${G.format(poly,{html:true})}</span>`).join('')).join('');}
-  function openDemo(){clearTimeout(demoTimer);demoOps=problem.suggestedOps||[];demoState=G.stateFromMatrix(problem.matrix);demoIndex=0;$('demoTitle').textContent=`第 ${levelLabel()} 关 · ${problem.title}`;$('demoStepLabel').textContent='准备开始';$('demoFormula').textContent='';$('demoReason').textContent=problem.demoPrinciple?.text||problem.note||'演示会按这道题的参考路线播放，最后自动显示答案。';$('demoPlay').textContent='开始演示';renderDemoState();$('demoDialog').showModal();demoTimer=setTimeout(playDemo,260);}
-  function playDemo(){clearTimeout(demoTimer);demoState=G.stateFromMatrix(problem.matrix);demoIndex=0;renderDemoState();$('demoPlay').disabled=true;const tick=()=>{if(demoIndex>=demoOps.length){const result=G.readResult(demoState);$('demoStepLabel').textContent='演示完成 · 现在可以自己操作';$('demoFormula').innerHTML=result===null?'':'D = '+G.format(result,{html:true});$('demoReason').textContent=(problem.demoPrinciple?.text||problem.note||'')+' 这只是参考路线，不会改变你的进度。';$('demoPlay').disabled=false;$('demoPlay').textContent='再演示一次';return;}const move=G.apply(demoState,demoOps[demoIndex]);demoState=move.state;demoIndex++;renderDemoState();$('demoStepLabel').textContent=`第 ${demoIndex} 步 · ${pretty(move.label)}`;$('demoFormula').textContent=pretty(move.label);demoTimer=setTimeout(tick,760);};tick();}
+  function demoExplanation(result){
+    if(String(problem.family||'').includes('范德蒙')){
+      const terms=G.permutationTerms(demoState), nonzero=terms.filter(t=>!G.equals(t.value,0));
+      const winner=nonzero[0]; return winner?`蒙：这条路线的逆序数为 ${winner.inversions}，符号 ${winner.sign<0?'−':'+'}；节点差连乘得到 ${G.format(result||winner.value)}。`:'蒙：节点重复，差积中出现 0。';
+    }
+    if(problem.special==='cos-tridiagonal') return `${problem.recurrence}　取 c=cos(θ) 后，${problem.formula}。`;
+    return problem.demoPrinciple?.text||problem.note||'演示会按这道题的参考路线播放，最后自动显示答案。';
+  }
+  function openDemo(){clearTimeout(demoTimer);demoOps=problem.suggestedOps||[];demoState=G.stateFromMatrix(problem.matrix);demoIndex=0;$('demoTitle').textContent=`第 ${levelLabel()} 关 · ${problem.title}`;$('demoStepLabel').textContent='准备开始';$('demoFormula').textContent='';$('demoReason').textContent=demoExplanation();$('demoPlay').textContent='开始演示';renderDemoState();$('demoDialog').showModal();demoTimer=setTimeout(playDemo,260);}
+  function playDemo(){clearTimeout(demoTimer);demoState=G.stateFromMatrix(problem.matrix);demoIndex=0;renderDemoState();$('demoPlay').disabled=true;const tick=()=>{if(demoIndex>=demoOps.length){const result=G.determinantPolynomial(demoState), readable=G.readResult(demoState);$('demoStepLabel').textContent='演示完成 · 现在可以自己操作';$('demoFormula').innerHTML='D = '+G.format(readable===null?result:readable,{html:true});$('demoReason').textContent=demoExplanation(readable||result)+' 这只是参考路线，不会改变你的进度。';$('demoPlay').disabled=false;$('demoPlay').textContent='再演示一次';return;}const move=G.apply(demoState,demoOps[demoIndex]);demoState=move.state;demoIndex++;renderDemoState();$('demoStepLabel').textContent=`第 ${demoIndex} 步 · ${pretty(move.label)}`;$('demoFormula').textContent=pretty(move.label);$('demoReason').textContent=demoExplanation();demoTimer=setTimeout(tick,760);};tick();}
   $('demoButton').addEventListener('click',openDemo);$('demoPlay').addEventListener('click',playDemo);$('demoClose').addEventListener('click',()=>{clearTimeout(demoTimer);$('demoDialog').close();});$('demoDialog').addEventListener('close',()=>{clearTimeout(demoTimer);});
   const sounds=[['select','选中','轻木击'],['move','移动','短促纸面摩擦'],['swap','交换','一来一回'],['zero','归零','轻轻落位'],['extract','提出因子','清脆单音'],['undo','撤销','回拨'],['invalid','条件不符','柔和提示'],['success','完成','短和弦'],['reset','重来','轻收束']];
   const dialogs={note:{title:'从这张笔记，走出自己的路线。',html:'<img src="note.jpg" width="1920" height="1092" alt="第一题手写笔记：四阶行列式，经汇总和消元求得 x 的四次方。"><p>笔记提供了一条思路，但自由实验不要求你照着它走。先转置、先交换、先从行入手，都可以。</p>'},help:{title:'你的选择，会真的改变矩阵。',html:'<ol><li><strong>选位置：</strong>左键点击矩阵边上的 r 或 c 选目标，右键点击选来源。也可以使用操作台下拉菜单。</li><li><strong>选动作：</strong>倍加、全部汇入、交换、提 x、倍乘、转置都可以尝试。倍加和交换还要选来源。</li><li><strong>先看后做：</strong>「预览变化」只预览结果；「执行这个动作」才会改变当前路线。</li><li><strong>走自己的路：</strong>零变多或变少都会如实显示。任何一步都能撤销、重做；退回后执行新动作会产生新的路线。</li><li><strong>结束挑战：</strong>当矩阵成为三角、反三角或排列展开只剩一项时，点「我能读出结果了」。</li></ol><p><span class="key">Ctrl Z</span> 撤销；<span class="key">Ctrl Y</span> 重做；<span class="key">T</span> 重置，<span class="key">A</span> 汇入第一列。完成后自动进入下一关；60 秒没有完成会出现黄色最短演示。</p><div class="callout">外面的因子会自动记录：交换变号、倍乘的补偿、提出的 x 都不会丢。每一步保持原始 D 不变。零格与乘积项统计按符号结构计算。</div><p>题库包含多种结构，提示只提供一种思路，不限制你的操作顺序。</p>'}};
@@ -199,7 +255,7 @@
   }
   function switchProblem(id){
     if(id===problem.id)return;persist();const next=problems.find(p=>p.id===id);if(!next)return;
-    problem=next;const route=savedGames[id];
+    problem=next;laplaceInfo=null;definitionSelection=[];const route=savedGames[id];
     try{if(!route||!G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected))throw new Error();history=route.history;index=route.index;}catch{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'原始题目。'}];index=0;}
     numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;configureForProblem();if(levelIndex()===1){axis='row';target=1;source=0;type='add';manualCoefficient=false;}resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
   }

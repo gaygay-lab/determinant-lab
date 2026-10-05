@@ -97,6 +97,52 @@
     return result;
   }
   function determinantPolynomial(state) { const s = cloned(state); return multiply(s.factor, det(s.matrix)); }
+  // The tridiagonal lesson uses c = cos(theta) as the polynomial variable x.
+  // Its matrix is genuinely symbolic (the diagonal is 2c and the two bands are -1),
+  // so the recurrence can be inspected without replacing the lesson with a
+  // numeric snapshot at theta = pi/2.
+  function cosTridiagonal(n) {
+    if (!Number.isInteger(n) || n < 1 || n > 6) throw new Error('三对角阶数须为 1 至 6。');
+    const matrix = Array.from({length:n}, (_, r) => Array.from({length:n}, (_, c) => r === c ? '2x' : Math.abs(r - c) === 1 ? -1 : 0));
+    const determinants = [[E.parse(1)]];
+    if (n >= 1) determinants.push(polynomial('2x'));
+    for (let k = 2; k <= n; k++) determinants.push(add(multiply(polynomial('2x'), determinants[k - 1]), constantMultiply(determinants[k - 2], -1)));
+    const state = stateFromMatrix(matrix);
+    return Object.freeze({ n, parameter: 'c = cos(θ)', matrix, state, determinants, recurrence: 'D₀ = 1，D₁ = 2c，Dₙ = 2cDₙ₋₁ − Dₙ₋₂', closedForm: `sin((${n + 1})θ) / sin θ`, polynomial: determinants[n] });
+  }
+  function cofactorExpansion(state, axis = 'row', index = 0) {
+    const s = cloned(state), normalizedAxis = axisName(axis);
+    checkIndex(index, s.matrix.length, '展开');
+    const terms = s.matrix.map((_, other) => {
+      const row = normalizedAxis === 'row' ? index : other;
+      const column = normalizedAxis === 'row' ? other : index;
+      const minor = s.matrix.filter((_, r) => r !== row).map(values => values.filter((_, c) => c !== column));
+      const minorDeterminant = det(minor), sign = (row + column) % 2 ? -1 : 1;
+      return { row, column, element: s.matrix[row][column], sign, minor, minorDeterminant, cofactor: constantMultiply(minorDeterminant, sign), value: constantMultiply(multiply(s.matrix[row][column], minorDeterminant), sign) };
+    });
+    const total = terms.reduce((sum, term) => add(sum, term.value), ZERO());
+    return Object.freeze({ state: s, axis: normalizedAxis, index, terms, total: multiply(s.factor, total) });
+  }
+  function permutationTerms(state) {
+    const s = cloned(state), n = s.matrix.length;
+    if (n > 5) throw new Error('排列展开最多展示 5 阶；请先降阶。');
+    const terms = [];
+    function walk(permutation, used) {
+      if (permutation.length === n) {
+        let inversions = 0, product = ONE();
+        for (let r = 0; r < n; r++) {
+          product = multiply(product, s.matrix[r][permutation[r]]);
+          for (let q = r + 1; q < n; q++) if (permutation[r] > permutation[q]) inversions++;
+        }
+        const sign = inversions % 2 ? -1 : 1;
+        terms.push({ permutation: permutation.slice(), inversions, sign, product, value: constantMultiply(product, sign), cells: permutation.map((column, row) => ({row, column, value:s.matrix[row][column]})) });
+        return;
+      }
+      for (let c = 0; c < n; c++) if (!used.has(c)) { used.add(c); permutation.push(c); walk(permutation, used); permutation.pop(); used.delete(c); }
+    }
+    walk([], new Set());
+    return terms;
+  }
   function zeros(state) { return state.matrix.reduce((count, row) => count + row.filter(zero).length, 0); }
   function axisName(axis) { if (axis === 'row') return 'row'; if (axis === 'column' || axis === 'col') return 'column'; throw new Error('请选择行或列。'); }
   function checkIndex(index, n, name) { if (!Number.isInteger(index) || index < 0 || index >= n) throw new Error(name + '编号超出范围。'); }
@@ -193,5 +239,5 @@
     info.permutation.forEach((column, row) => { result = multiply(result, state.matrix[row][column]); });
     return constantMultiply(result, info.sign);
   }
-  return Object.freeze({ initial, stateFromMatrix, apply, format, evaluate, matrixAt, determinantPolynomial, zeros, structure, readResult, equals, polynomial });
+  return Object.freeze({ initial, stateFromMatrix, apply, format, evaluate, matrixAt, determinantPolynomial, zeros, structure, readResult, equals, polynomial, cosTridiagonal, cofactorExpansion, permutationTerms, add, multiply, constantMultiply });
 });
