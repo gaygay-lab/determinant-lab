@@ -8,11 +8,13 @@
   const pretty=s=>String(s).replace(/([RC])([1-6])/g,(_,a,b)=>a.toLowerCase()+sub[Number(b)-1]).replace(/\+ \(-1\)/g,'− ').replace(/\+ \(1\)/g,'+ ').replace(/-/g,'−');
   let history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}],index=0;
   let axis='column',target=0,source=1,type='add',numeric=false,x=2,preview=false,compact=false,won=false;
-  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false;
+  let animationTimer=null,toastTimer=null,hintCount=0, idleTimer=null, advanceTimer=null, demoVisible=false, answerCandidate=null;
   S.init();
   const current=()=>history[index].state;
   const n=()=>current().matrix.length;
   const indices=()=>Array.from({length:n()},(_,i)=>i);
+  const levelIndex=()=>problems.findIndex(p=>p.id===problem.id)+1;
+  const levelLabel=()=>String(levelIndex()).padStart(2,'0');
   const linePolys=()=>{const s=current();return axis==='row'?s.matrix[target]:s.matrix.map(row=>row[target]);};
   const factorInfo=()=>{const line=linePolys();if(!line.length||line.every(p=>p.every(E.isZero)))return null;const hasX=line.every(p=>p.length>1&&E.isZero(p[0]));if(hasX)return {kind:'x',value:'x',label:'提取 x'};if(line.some(p=>p.length!==1))return null;let nums=line.map(p=>p[0]).filter(v=>!E.isZero(v));if(!nums.length)return null;const abs=v=>E.compare(v,0)<0?E.neg(v):v;const gcd=(a,b)=>{a=BigInt(a);b=BigInt(b);while(b){const t=a%b;a=b;b=t;}return a<0n?-a:a};const lcm=(a,b)=>a/gcd(a,b)*b;let gn=0n,ld=1n;for(const v of nums){const f=E.parse(v);const nn=BigInt(f.n<0?'-'+f.n.slice(1):f.n),dd=BigInt(f.d);gn=gn?gcd(gn,nn):nn;ld=lcm(ld,dd);}const factor=E.parse(gn.toString()+'/'+ld.toString());if(E.eq(factor,1)||E.eq(factor,-1))return null;return {kind:'constant',value:E.fmt(factor),label:'提取公因子 '+E.fmt(factor)};};
   const effectiveOp=()=>{const base=op(),info=type==='extractX'?factorInfo():null;if(type==='extractX'&&info?.kind==='constant'){base.type='scale';base.factor=E.fmt(E.div(1,info.value));}return base;};
@@ -23,6 +25,7 @@
   const zero=p=>G.equals(p,0);
   function persist(){try{savedGames[problem.id]={history,index,solved:!!savedGames[problem.id]?.solved};localStorage.setItem('det-lab-bank-v3',JSON.stringify({version:3,active:problem.id,games:savedGames}));}catch{$('saveStatus').textContent='当前浏览器暂不能保存路线。';}}
   try{const saved=JSON.parse(localStorage.getItem('det-lab-bank-v3'));if(saved?.version===3&&saved.games){savedGames=saved.games;problem=problems.find(p=>p.id===saved.active)||problems[0];const route=savedGames[problem.id];if(route&&Array.isArray(route.history)&&route.history.length<500&&Number.isInteger(route.index)&&route.index>=0&&route.index<route.history.length&&G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected)){history=route.history;index=route.index;}else{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}}}catch{problem=problems[0];history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}];index=0;}
+  if(savedGames[problem.id]?.solved){const nextUnsolved=problems.find(p=>!savedGames[p.id]?.solved);if(nextUnsolved){problem=nextUnsolved;history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'开始下一关。'}];index=0;}}
   function countTerms(matrix){let count=0;function walk(r,used){if(r===matrix.length){count++;return;}for(let c=0;c<matrix.length;c++)if(!(used&(1<<c))&&!zero(matrix[r][c]))walk(r+1,used|(1<<c));}walk(0,0);return count;}
   function getZeroBlocks(matrix){
     const candidates=[];for(let r=0;r<matrix.length;r++)for(let c=0;c<matrix.length;c++)for(let h=1;r+h<=matrix.length;h++)for(let w=1;c+w<=matrix.length;w++)if(h*w>=3){let all=true;for(let i=r;i<r+h;i++)for(let j=c;j<c+w;j++)if(!zero(matrix[i][j]))all=false;if(all)candidates.push({r,c,h,w,area:h*w});}
@@ -66,7 +69,7 @@
     $('history').innerHTML=history.map((entry,i)=>`<button class="history-item ${i===index?'current':i>index?'future':''}" data-history="${i}" ${i===index?'aria-current="step"':''}><small>${String(i).padStart(2,'0')}</small>${esc(pretty(entry.label))}</button>`).join('');
     const st=G.structure(shown),ready=st.type!=='none';$('stage').classList.toggle('readable',ready);$('structureText').textContent=st.description;$('readResult').classList.toggle('ready',ready);$('readResult').disabled=preview;$('readResult').firstChild.textContent=preview?'退出预览后读取结果 ':'我能读出结果了 ';
     $('stageCaption').textContent=preview?'预览：深色格子是这个动作将产生的结果。':ready?'结构已经可以读值；也可以继续尝试另一种化简。':numeric?'数值在变化；下方统计仍按符号结构计算。':`已选${axis==='row'?'行':'列'} ${axis==='row'?'r':'c'}${sub[target]} 为目标，你可以随时换位置。`;
-    $('matrix').classList.toggle('success',won);$('result').hidden=!won;
+    $('matrix').classList.toggle('success',won);$('result').hidden=!(won||answerCandidate);$('answerGate').hidden=!(answerCandidate&&!won);if(answerCandidate&&!won){$('answerFeedback').textContent='结构已读出，请填写答案后进入下一关。';}
     updateSound(); renderBank();
   }
   function selected(a,i,isSource=false){axis=a;if(isSource){source=i;if(source===target)target=(source+1)%n();}else{target=i;if(source===target)source=(target+1)%n();}preview=false;render();S.play('select');}
@@ -92,7 +95,7 @@
     try{move=G.apply(before,operation);}catch(e){preview=false;render();feedback(e.message,'error');S.play('invalid');return;}
     if(requestedType==='extractX'&&extractedInfo?.kind==='constant'){move.label='从 '+(axis==='row'?'r':'c')+(target+1)+' 提取公因子 '+extractedInfo.value;move.reason='目标'+(axis==='row'?'行':'列')+'的每个元素都含公因子 '+extractedInfo.value+'，一键提出；外因子同步补偿。';}
     if(JSON.stringify(move.state)===JSON.stringify(before)){feedback('这个动作没有改变结构。你仍然可以换一个倍数或位置。');S.play('select');return;}
-    history=history.slice(0,index+1);history.push({state:move.state,label:move.label,reason:move.reason});index++;if(requestedType==='extractX')type='add';resetIdle();
+    history=history.slice(0,index+1);history.push({state:move.state,label:move.label,reason:move.reason});index++;if(requestedType==='extractX')type='add';answerCandidate=null;resetIdle();
     preview=false;won=false;persist();render();
     const delta=G.zeros(move.state)-G.zeros(before),terms=countTerms(move.state.matrix);
     feedback((delta>0?`新出现 ${delta} 个零。`:delta<0?`零少了 ${-delta} 个；这条路也可以继续探索。`:'结构变了；不必每一步都马上变简单。')+(terms===1?'现在只剩一个可能非零的乘积项。':''),delta>0?'good':'');
@@ -101,7 +104,7 @@
     S.play(sound,{pan:operation.axis==='column'?Math.max(-.7,Math.min(.7,(operation.target-operation.source)*.22)):0});
     $('srStatus').textContent=pretty(move.label)+'。'+move.reason;
   }
-  function travel(i){if(i<0||i>=history.length||i===index)return;const backwards=i<index;index=i;preview=false;won=false;resetIdle();persist();render();feedback(`${backwards?'退回':'恢复'}到第 ${index} 步。${history[index].reason}`);S.play('undo');}
+  function travel(i){if(i<0||i>=history.length||i===index)return;const backwards=i<index;index=i;preview=false;won=false;answerCandidate=null;resetIdle();persist();render();feedback(`${backwards?'退回':'恢复'}到第 ${index} 步。${history[index].reason}`);S.play('undo');}
   $('apply').addEventListener('click',apply);
   $('operations').addEventListener('click',e=>{const b=e.target.closest('[data-op]');if(!b||b.disabled)return;type=b.dataset.op;preview=false;if(type==='extractX'&&factorInfo())apply();else{render();S.play('select');}});
   $('axis').addEventListener('change',e=>{axis=e.target.value;preview=false;render();S.play('select');});
@@ -121,7 +124,9 @@
   $('reset').addEventListener('click',()=>{if(index===0)return;travel(0);feedback('回到了原式；刚才的路线仍在记录里，可以重做或尝试新分支。');S.play('reset');});
 
   $('hint').addEventListener('click',()=>{hintCount++;const ready=G.structure(current()).type!=='none';$('hintText').hidden=false;$('hintText').textContent=ready?'结构已经可以读值了。':hintCount===1?problem.hint:(problem.note||problem.hint);$('hint').lastElementChild.textContent='−';});
-  $('readResult').addEventListener('click',()=>{const result=G.readResult(current());if(result===null){feedback('当前结构还不能直接读值。可以先制造更多的零；这不是失败，继续试试。');$('structureText').textContent='目前还有 '+countTerms(current().matrix)+' 个可能非零的乘积项。尝试化为三角结构，或让排列展开只剩一项。';S.play('invalid');return;}if(!G.equals(result,problem.expected)){feedback('结果校验未通过，请撤销后检查当前变换。','error');return;}won=true;if(!savedGames[problem.id])savedGames[problem.id]={};savedGames[problem.id].solved=true;persist();render();$('result').innerHTML=`<strong>这条路线成立。</strong><span class="math">D = ${G.format(result,{html:true})}</span><small>${esc(G.structure(current()).description)}<br>你用了 ${index} 次动作；没有规定唯一解法。</small>`;feedback('结构已经说明了答案。下一关即将开始；你也可以先撤销几步。','good');S.play('success');resetIdle();clearTimeout(advanceTimer);advanceTimer=setTimeout(()=>{const next=problems[problems.findIndex(p=>p.id===problem.id)+1];if(next)switchProblem(next.id);},1400);});
+  $('readResult').addEventListener('click',()=>{const result=G.readResult(current());if(result===null){feedback('当前结构还不能直接读值。可以先制造更多的零；这不是失败，继续试试。');$('structureText').textContent='目前还有 '+countTerms(current().matrix)+' 个可能非零的乘积项。尝试化为三角结构，或让排列展开只剩一项。';S.play('invalid');return;}answerCandidate=result;render();$('result').innerHTML=`<strong>你已经把结构化简到可以读值。</strong><span class="math">D = ${G.format(result,{html:true})}</span><small>${esc(G.structure(current()).description)}<br>现在把这个值填进答案框，答对后才会进入下一关。</small>`;feedback('答案已经露出来了，填写它，完成这一关。','good');$('answerInput').focus();S.play('extract');});
+  function submitAnswer(){if(!answerCandidate)return;const raw=$('answerInput').value.trim().replace(/^D\s*=\s*/i,'');try{if(!G.equals(G.polynomial(raw),problem.expected)){throw new Error('答案还不对，再检查主对角线乘积和交换次数。');}won=true;if(!savedGames[problem.id])savedGames[problem.id]={};savedGames[problem.id].solved=true;persist();render();$('result').innerHTML=`<strong>答案正确，过关。</strong><span class="math">D = ${G.format(answerCandidate,{html:true})}</span><small>${esc(G.structure(current()).description)}<br>你用了 ${index} 次动作；下一关即将开始。</small>`;feedback('答对了，准备进入下一关。','good');S.play('success');resetIdle();clearTimeout(advanceTimer);advanceTimer=setTimeout(()=>{const next=problems[problems.findIndex(p=>p.id===problem.id)+1];if(next)switchProblem(next.id);},1400);}catch(err){$('answerFeedback').textContent=err.message;$('answerFeedback').className='answer-error';feedback('答案还不对，继续看结构。','error');S.play('invalid');}}
+  $('answerSubmit').addEventListener('click',submitAnswer);$('answerInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();submitAnswer();}});
   function updateSound(){const on=S.isEnabled();$('soundToggle').setAttribute('aria-pressed',String(on));$('soundToggle').lastElementChild.textContent=on?'音效开':'音效关';}
   $('soundToggle').addEventListener('click',()=>{S.setEnabled(!S.isEnabled());updateSound();if(S.isEnabled())S.play('select');});window.addEventListener('labsoundchange',updateSound);
   let dialogTrigger=null;
@@ -134,15 +139,18 @@
   }else{$('dialogTitle').textContent=dialogs[name].title;$('dialogContent').innerHTML=dialogs[name].html;}$('infoDialog').showModal();}));
   $('closeDialog').addEventListener('click',()=>$('infoDialog').close());$('infoDialog').addEventListener('close',()=>dialogTrigger?.focus());
   $('infoDialog').addEventListener('click',e=>{if(e.target!==$('infoDialog'))return;const r=$('infoDialog').getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)$('infoDialog').close();});
-  document.addEventListener('keydown',e=>{if($('infoDialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();travel(index+(e.shiftKey?1:-1));return;}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();travel(index+1);return;}if(e.ctrlKey||e.metaKey||e.altKey)return;if(k==='t'){e.preventDefault();$('reset').click();}else if(k==='a'){e.preventDefault();axis='column';target=0;type='sum';source=source===0?1:source;apply();}else if(k==='r'){e.preventDefault();axis='row';render();feedback('已切换为按行操作。');}else if(k==='c'){e.preventDefault();axis='column';render();feedback('已切换为按列操作。');}else if(k==='m'){e.preventDefault();type='add';render();feedback('已选择倍加；左键目标，右键来源。');}else if(k==='x'){e.preventDefault();type='extractX';if(factorInfo())apply();else{render();feedback('当前选中行列没有可提取的公因子。','error');}}else if(k==='s'){e.preventDefault();type='swap';render();feedback('已选择交换；左键目标，右键来源。');}else if(k==='v'){e.preventDefault();type='transpose';apply();}});
+  document.addEventListener('keydown',e=>{if($('infoDialog').open||['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName))return;const k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();travel(index+(e.shiftKey?1:-1));return;}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();travel(index+1);return;}if(e.ctrlKey||e.metaKey||e.altKey)return;if(k==='t'){e.preventDefault();type='transpose';apply();}else if(k==='a'){e.preventDefault();axis='column';target=0;type='sum';source=source===0?1:source;apply();}else if(k==='r'){e.preventDefault();axis='row';render();feedback('已切换为按行操作。');}else if(k==='c'){e.preventDefault();axis='column';render();feedback('已切换为按列操作。');}else if(k==='m'){e.preventDefault();type='add';render();feedback('已选择倍加；左键目标，右键来源。');}else if(k==='x'){e.preventDefault();type='extractX';if(factorInfo())apply();else{render();feedback('当前选中行列没有可提取的公因子。','error');}}else if(k==='s'){e.preventDefault();type='swap';render();feedback('已选择交换；左键目标，右键来源。');}else if(k==='v'){e.preventDefault();$('reset').click();}});
   $('showDemo').addEventListener('click',()=>{const ops=problem.suggestedOps||[];$('demoPanel').hidden=false;$('demoPanel').innerHTML='<strong>最短参考路线</strong>'+ops.map((item,i)=>`<div class="demo-step"><b>${i+1}</b><span>${esc(item.type==='extractX'?'提取 x':item.type==='sum'?'全部汇入':item.type==='transpose'?'转置':item.type==='swap'?'交换':item.type==='scale'?'倍乘':'倍加')} · ${item.axis?((item.axis==='row'?'R':'C')+(item.target+1)):''}</span></div>`).join('')+'<small>这是参考路线，不会替你执行。</small>';$('showDemo').textContent='已显示最短演示';S.play('select');});
   $('bankToggle').addEventListener('click',()=>{const open=$('bankToggle').getAttribute('aria-expanded')==='true';$('bankToggle').setAttribute('aria-expanded',String(!open));$('bankToggle').innerHTML=open?'选择关卡 <span>⌄</span>':'收起题库 <span>⌃</span>';$('bankMenu').hidden=open;document.querySelector('.bank-sidebar').classList.toggle('bank-open',!open);});
+  function openTutorial(){if(levelIndex()!==1)return;let seen=false;try{seen=localStorage.getItem('det-lab-tutorial-v1')==='seen';}catch{}if(!seen){$('tutorialOverlay').hidden=false;document.body.classList.add('tutorial-active');}}
+  $('tutorialNext').addEventListener('click',()=>{try{localStorage.setItem('det-lab-tutorial-v1','seen');}catch{}$('tutorialOverlay').hidden=true;document.body.classList.remove('tutorial-active');S.play('select');});
+  $('tutorialSkip').addEventListener('click',()=>{$('tutorialNext').click();});
   function renderBank(){
     const family=$('bankFilter').value;
     const list=problems.filter(p=>family==='all'||p.family===family);
-    $('problemList').innerHTML=list.map(p=>`<button class="problem-link ${p.id===problem.id?'current':''}" data-problem="${p.id}" ${p.id===problem.id?'aria-current="page"':''}><span class="problem-index">${String(p.id).padStart(2,'0')}</span><span>${esc(p.title)}<small>${esc(p.family)} · ${esc(p.difficulty)}</small></span><span class="solved-mark">${savedGames[p.id]?.solved?'✓':''}</span></button>`).join('');
+    $('problemList').innerHTML=list.map(p=>`<button class="problem-link ${p.id===problem.id?'current':''}" data-problem="${p.id}" ${p.id===problem.id?'aria-current="page"':''}><span class="problem-index">${String(problems.findIndex(x=>x.id===p.id)+1).padStart(2,'0')}</span><span>${esc(p.title)}<small>${esc(p.family)} · ${esc(p.difficulty)}</small></span><span class="solved-mark">${savedGames[p.id]?.solved?'✓':''}</span></button>`).join('');
     $('bankProgress').textContent=problems.filter(p=>savedGames[p.id]?.solved).length+' / '+problems.length;
-    $('problemTitle').textContent=String(problem.id).padStart(2,'0')+' · '+problem.title;
+    $('problemTitle').textContent=levelLabel()+' · '+problem.title;
     $('problemNote').textContent=n()+' 阶 · '+problem.family+' · '+problem.difficulty;
     $('currentCategory').textContent=problem.family;
     $('problemPicker').value=problem.id;
@@ -153,13 +161,13 @@
     if(id===problem.id)return;persist();const next=problems.find(p=>p.id===id);if(!next)return;
     problem=next;const route=savedGames[id];
     try{if(!route||!G.equals(G.determinantPolynomial(route.history[route.index].state),problem.expected))throw new Error();history=route.history;index=route.index;}catch{history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'原始题目。'}];index=0;}
-    axis='column';target=0;source=1;type='add';numeric=false;preview=false;compact=false;won=false;hintCount=0;resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
+    axis='column';target=0;source=1;type='add';numeric=false;preview=false;compact=false;won=false;answerCandidate=null;hintCount=0;resetIdle();$('hintText').hidden=true;$('hint').lastElementChild.textContent='＋';$('coefficient').value='-1';$('actionArrows').innerHTML='';persist();render();feedback(index?'已恢复这题上次的路线。':'选择目标、来源和动作。');S.play('select');
   }
   $('bankFilter').innerHTML='<option value="all">全部题型</option>'+[...new Set(problems.map(p=>p.family))].map(f=>`<option value="${esc(f)}">${esc(f)}</option>`).join('');
-  $('problemPicker').innerHTML=problems.map(p=>`<option value="${p.id}">${String(p.id).padStart(2,'0')} · ${esc(p.title)}</option>`).join('');
+  $('problemPicker').innerHTML=problems.map((p,i)=>`<option value="${p.id}">${String(i+1).padStart(2,'0')} · ${esc(p.title)}</option>`).join('');
   $('bankFilter').addEventListener('change',renderBank);$('problemPicker').addEventListener('change',e=>switchProblem(Number(e.target.value)));
   $('problemList').addEventListener('click',e=>{const b=e.target.closest('[data-problem]');if(b)switchProblem(Number(b.dataset.problem));});
   $('previousProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)-1]?.id));
   $('nextProblem').addEventListener('click',()=>switchProblem(problems[problems.findIndex(p=>p.id===problem.id)+1]?.id));
-  render();armIdle();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
+  render();armIdle();openTutorial();if(index)feedback('已恢复你上次停下的位置；所有动作仍可撤销。');
 })();
