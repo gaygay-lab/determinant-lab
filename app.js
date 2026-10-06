@@ -5,7 +5,7 @@
   const reduced=matchMedia('(prefers-reduced-motion: reduce)');
   const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const sub=['₁','₂','₃','₄','₅','₆'];
-  const problemOrder=[61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,2,3,4,6,9,11,18,19,20,23,31,32,39,45,47,50,51,52,54,55,57,59,60,1]; const orderRank=new Map(problemOrder.map((id,i)=>[id,i])); const problems=[...window.PROBLEMS].sort((a,b)=>(orderRank.get(a.id)??999+a.id)-(orderRank.get(b.id)??999+b.id)); let problem=problems[0], savedGames={};
+  const problemOrder=[61,62,63,64,65,66,67,68,69,70,71,72,73,74,75,76,77,78,2,3,201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250,251,252,253,254,255,256,257,258]; const orderRank=new Map(problemOrder.map((id,i)=>[id,i])); const problems=[...window.PROBLEMS].sort((a,b)=>(orderRank.get(a.id)??999+a.id)-(orderRank.get(b.id)??999+b.id)); let problem=problems[0], savedGames={};
   const pretty=s=>String(s).replace(/([RC])([1-6])/g,(_,a,b)=>a.toLowerCase()+sub[Number(b)-1]).replace(/\+ \(-1\)/g,'− ').replace(/\+ \(1\)/g,'+ ').replace(/-/g,'−');
   let history=[{state:G.stateFromMatrix(problem.matrix),label:'原式',reason:'选择自己的第一步。'}],index=0;
   let axis='column',target=0,source=1,type='add',numeric=false,x=2,preview=false,compact=false,won=false;
