@@ -1,15 +1,14 @@
-PASS C1 openingDemo visible; animations=1
-PASS C2 data-tour-step values=3,2,1,5,4,6; step 2 waits for player
-PASS C3 one demo entry: #demoButton
-PASS C6 keyboard hints and action labels visible
-PASS C4 78 level demos completed with answer state
-PASS C5 exitModal visible after progress and top mouseout
-PASS C5-repeat exitModal only once per session
-PASS C7 cos-tridiagonal=3; formula fields present
-PASS C11 total=78; fun levels=5
-PASS C8 meng-badge appears for Vandermonde
-PASS C9 laplace operation and definition mode present
-PASS C10 mobile tap-only first level completed
-PASS C12 saveMoment produced a download
-PASS C13 paper palette colors=rgb(247, 247, 245)|rgb(253, 253, 251)|rgba(0, 0, 0, 0)
-PASS C14 DetEngine: 166 checks passed. | SymbolicGame: 190 checks passed. | 78 problems and 228 reference moves verified.
+PASS C1 opening board=9; animations before/after=2/16
+PASS C2 sequence=1→2→3→4→5→6; wrong stayed 2; roots=1/1/1/1/1/1
+PASS C3 one #demoButton and no duplicate demo entries
+PASS C6 T=转置, V=重置, S=交换 labels agree
+PASS C4 78 demos: animation and engine answer verified
+PASS C5 exact copy and one prompt per session
+PASS C7 n=3,4,5 and 3 random cos values agree with closed form
+PASS C8 Vandermonde level shows 蒙 badge
+PASS C9 Laplace terms=2; definition route closed
+PASS C11 levels=78; 爽关=5; README count agrees
+PASS C10 390×844 first level completed through taps and keypad
+PASS C12 PNG download is non-empty (30308 bytes)
+PASS C13 paper average saturation before/after=0.020880 0.020391
+PASS C14 DetEngine: 166 checks passed. | SymbolicGame: 190 checks passed. | 78 problems and 228 reference moves verified. | special cos checks passed

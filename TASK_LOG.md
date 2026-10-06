@@ -13,5 +13,8 @@ Read: 行列之间 for first-time linear-algebra learners · core loop=watch →
 - The public acceptance script is intentionally run against a fresh browser context and a versioned URL; it is not allowed to read or write the player's storage.
 - One limitation remains explicitly tracked: browser-native `beforeunload` text cannot be customized. The in-page exit dialog is the custom message; the native guard is only a fallback.
 
-- Online acceptance was run against a fresh Chrome context with commit `f90a839`; all C1–C14 checks passed.
-- The acceptance output is committed in `audit/ACCEPTANCE.txt`.
+- The previous `f90a839` acceptance record is superseded; it did not cover the strict behavior checks required by the user.
+- Rebuilt the guided flow, opening scene, replay controls, physical motion layer, answer keypad, and real mathematical expansion views.
+- Online acceptance was rerun against fresh Chrome contexts at `85e5d53`; C1–C14 all PASS. The full output is in `audit/ACCEPTANCE.txt`.
+- Two six-report playtest rounds were run at mobile and desktop sizes; reports and screenshots are in `audit/playtest-*.md` and `.png`.
+- Before/after evidence was recaptured at levels 1, 35, and 70 for both sizes in `audit/before/` and `audit/after/`.
