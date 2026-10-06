@@ -1,0 +1,2 @@
+const assert=require('node:assert/strict');const G=require('../symbolic.js');
+for(const n of [3,4,5]){const q=G.cosTridiagonal(n);for(let r=0;r<n;r++)for(let c=0;c<n;c++)assert.equal(String(q.matrix[r][c]),r===c?'2x':Math.abs(r-c)===1?'1':'0');for(const c of [-1,0,0.5,1]){const expected=Math.sin((n+1)*Math.acos(c))/Math.sin(Math.acos(c));const got=Number(G.evaluate(q.polynomial,c).n)/Number(G.evaluate(q.polynomial,c).d);if(Math.abs(c-1)<1e-8||Math.abs(c+1)<1e-8){continue;}assert.ok(Math.abs(got-expected)<1e-8,`${n} ${c}`)}}console.log('special cos checks passed');
