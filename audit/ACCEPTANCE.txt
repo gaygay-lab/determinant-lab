@@ -11,4 +11,4 @@ PASS C11 levels=78; 爽关=5; README count agrees
 PASS C10 390×844 first level completed through taps and keypad
 PASS C12 PNG download is non-empty (30308 bytes)
 PASS C13 paper average saturation before/after=0.020880 0.020391
-PASS C14 DetEngine: 166 checks passed. | SymbolicGame: 190 checks passed. | 78 problems and 228 reference moves verified. | special cos checks passed
+PASS C14 DetEngine: 166 checks passed. | SymbolicGame: 190 checks passed. | 78 problems and 231 reference moves verified. | special cos checks passed
