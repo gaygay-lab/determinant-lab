@@ -78,5 +78,20 @@
     const structure=G.structure(after);if(structure.permutation)path(board,structure.permutation);
     return blocks(board,after);
   }
-  window.BoardMotion=Object.freeze({render,animate,blocks,path,flash,pulse});
+  function tridiagonal(board,n){
+    board.querySelectorAll('.lattice-line').forEach(e=>e.remove());
+    const line=document.createElement('div');line.className='lattice-line';line.textContent='·  ·  ·  ·  ·  ·  ·';board.append(line);
+    pulse(line,[{transform:'translateX(-18px)',opacity:0},{transform:'translateX(18px)',opacity:.7},{transform:'translateX(70px)',opacity:0}],0,900);
+    for(let i=0;i<n;i++){const el=cell(board,i,i);pulse(el,[{transform:'scale(.85)',opacity:.35},{transform:'scale(1.12)',opacity:1,offset:.55},{transform:'scale(1)',opacity:1}],i*90,520);}
+    const band=document.createElement('div');band.className='tridiagonal-band';band.textContent='1  ·  2cos x  ·  1';board.append(band);pulse(band,[{transform:'translateX(-10px)',opacity:0},{transform:'translateX(0)',opacity:1}],180,500);
+  }
+  function vandermonde(board,state){
+    const n=state.matrix.length,a=state.matrix,all=(row,value)=>row.every(p=>G.equals(p,value));
+    const firstRow=all(a[0],1),firstCol=a.every(row=>G.equals(row[0],1)),lastRow=all(a[n-1],1);
+    board.querySelectorAll('.vandermonde-arrow,.vandermonde-sign').forEach(e=>e.remove());
+    const arrow=document.createElement('div');arrow.className='vandermonde-arrow';arrow.textContent=firstRow?'↓':firstCol?'↘':'↕';arrow.title=firstRow?'第一行全为 1：沿幂次向下读取':firstCol?'第一列全为 1：先转置':'最后一行全为 1：翻转行序';board.append(arrow);pulse(arrow,[{transform:'translateY(-8px)',opacity:0},{transform:'translateY(0)',opacity:1}],0,520);
+    if(lastRow||(!firstRow&&!firstCol)){const sign=document.createElement('div');sign.className='vandermonde-sign';const exponent=n*(n-1)/2;sign.textContent=`行序翻转：(-1)^${exponent}`;board.append(sign);pulse(sign,[{transform:'translateX(12px)',opacity:0},{transform:'translateX(0)',opacity:1}],120,480);}
+    const label=document.createElement('div');label.className='vandermonde-product';label.innerHTML='∏<sub>i&lt;j</sub>(x<sub>j</sub> − x<sub>i</sub>)';board.append(label);pulse(label,[{transform:'scale(.92)',opacity:0},{transform:'scale(1)',opacity:1}],230,520);return {firstRow,firstCol,lastRow,exponent:n*(n-1)/2};
+  }
+  window.BoardMotion=Object.freeze({render,animate,blocks,path,flash,pulse,vandermonde,tridiagonal});
 })();
