@@ -252,14 +252,14 @@
   function finishOpening(){openingTimers.forEach(clearTimeout);openingTimers=[];$('openingDemo').hidden=true;document.querySelector('main').inert=false;try{sessionStorage.setItem('det-lab-opening-v3','seen');}catch{}openTutorial();}
   function openOpening(force=false){
     let seen=false;try{seen=sessionStorage.getItem('det-lab-opening-v3')==='seen';}catch{}if(seen&&!force){openTutorial();return;}
-    if(tourActive)finishTutorial();$('openingDemo').hidden=false;document.querySelector('main').inert=true;
+    if(tourActive)finishTutorial();$('openingDemo').hidden=false;$('openingDemo').dataset.phase='merge';document.querySelector('main').inert=true;
     const before=G.stateFromMatrix([[1,1,2],[-3,2,1],[-3,0,3]]),op={type:'sum',axis:'column',target:0},after=G.apply(before,op).state,board=$('openingMatrix');
     BoardMotion.render(board,before);$('openingStep').textContent='其他列，一起汇入第一列';$('openingFormula').textContent='c₁ ← c₁ + c₂ + c₃';BoardMotion.flash(board);
     const later=(fn,t)=>openingTimers.push(setTimeout(fn,t));
-    later(()=>{BoardMotion.render(board,after);BoardMotion.animate(board,before,after,op,$('openingFactor'));$('openingStep').textContent='相消的位置，零逐个出现';},700);
-    later(()=>{BoardMotion.blocks(board,after,true);$('openingStep').textContent='把相邻的零，看成一整块';},1800);
-    later(()=>{board.querySelectorAll('.structure-block').forEach(el=>el.remove());BoardMotion.path(board,[0,1,2]);$('openingStep').textContent='三角结构：其他排列都被零挡住';$('openingFormula').textContent='D = 1 × 1 × 2';},2900);
-    later(()=>{$('openingFormula').textContent='D = '+G.format(G.readResult(after));BoardMotion.pulse($('openingFormula'),[{transform:'scale(.9)',opacity:0},{transform:'scale(1)',opacity:1}]);},3900);
+    later(()=>{BoardMotion.render(board,after);BoardMotion.animate(board,before,after,op,$('openingFactor'));$('openingDemo').dataset.phase='zeros';$('openingStep').textContent='相消的位置，零逐个出现';},700);
+    later(()=>{BoardMotion.blocks(board,after,true);$('openingDemo').dataset.phase='zero-block';$('openingStep').textContent='把相邻的零，看成一整块';},1800);
+    later(()=>{board.querySelectorAll('.structure-block').forEach(el=>el.remove());BoardMotion.path(board,[0,1,2]);$('openingDemo').dataset.phase='diagonal';$('openingStep').textContent='三角结构：其他排列都被零挡住';$('openingFormula').textContent='D = 4 × 2 × 3';},2900);
+    later(()=>{$('openingDemo').dataset.phase='answer';$('openingFormula').textContent='D = '+G.format(G.readResult(after));BoardMotion.pulse($('openingFormula'),[{transform:'scale(.9)',opacity:0},{transform:'scale(1)',opacity:1}]);},3900);
     later(finishOpening,5200);
   }
   $('openingSkip').addEventListener('click',finishOpening);$('replayOpening').addEventListener('click',()=>{document.querySelector('.game-menu').open=false;openOpening(true);});
