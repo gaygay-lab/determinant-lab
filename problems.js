@@ -3728,17 +3728,17 @@ window.PROBLEMS = [
     "matrix": [
       [
         "2x",
-        -1,
+        1,
         0
       ],
       [
-        -1,
+        1,
         "2x",
-        -1
+        1
       ],
       [
         0,
-        -1,
+        1,
         "2x"
       ]
     ],
@@ -3746,11 +3746,15 @@ window.PROBLEMS = [
     "formula": "sin(4x)/sin x",
     "formulaVariable": "c = cos(x)",
     "recurrence": "D₀=1，D₁=2c，Dₙ=2cDₙ₋₁−Dₙ₋₂",
-    "numericSamples": {"0": "0", "1/2": "0", "1": "4"},
+    "numericSamples": {
+      "0": "0",
+      "1/2": "-1",
+      "1": "4"
+    },
     "special": "cos-tridiagonal",
     "n": 3,
     "hint": "先观察主对角线带和上下次对角线。",
-    "note": "令 c=cos(x)，主对角线为 2c、相邻对角线为 −1。D₃=8c³−4c，闭式为 sin(4x)/sin x。",
+    "note": "令 c=cos(x)，主对角线为 2c、相邻对角线为 1。D₃=8c³−4c，闭式为 sin(4x)/sin x。",
     "demoPrinciple": {
       "title": "三项递推来自带状结构",
       "text": "每扩大一阶，只会新增一条主对角线乘积和一条回退项。"
@@ -3765,26 +3769,26 @@ window.PROBLEMS = [
     "matrix": [
       [
         "2x",
-        -1,
+        1,
         0,
         0
       ],
       [
-        -1,
+        1,
         "2x",
-        -1,
+        1,
         0
       ],
       [
         0,
-        -1,
+        1,
         "2x",
-        -1
+        1
       ],
       [
         0,
         0,
-        -1,
+        1,
         "2x"
       ]
     ],
@@ -3792,7 +3796,11 @@ window.PROBLEMS = [
     "formula": "sin(5x)/sin x",
     "formulaVariable": "c = cos(x)",
     "recurrence": "D₀=1，D₁=2c，Dₙ=2cDₙ₋₁−Dₙ₋₂",
-    "numericSamples": {"0": "1", "1/2": "-1", "1": "5"},
+    "numericSamples": {
+      "0": "1",
+      "1/2": "-1",
+      "1": "5"
+    },
     "special": "cos-tridiagonal",
     "n": 4,
     "hint": "把D1、D2写出来，观察D_n的递推。",
@@ -3811,37 +3819,37 @@ window.PROBLEMS = [
     "matrix": [
       [
         "2x",
-        -1,
+        1,
         0,
         0,
         0
       ],
       [
-        -1,
+        1,
         "2x",
-        -1,
+        1,
         0,
         0
       ],
       [
         0,
-        -1,
+        1,
         "2x",
-        -1,
+        1,
         0
       ],
       [
         0,
         0,
-        -1,
+        1,
         "2x",
-        -1
+        1
       ],
       [
         0,
         0,
         0,
-        -1,
+        1,
         "2x"
       ]
     ],
@@ -3849,7 +3857,11 @@ window.PROBLEMS = [
     "formula": "sin(6x)/sin x",
     "formulaVariable": "c = cos(x)",
     "recurrence": "D₀=1，D₁=2c，Dₙ=2cDₙ₋₁−Dₙ₋₂",
-    "numericSamples": {"0": "0", "1/2": "-1", "1": "6"},
+    "numericSamples": {
+      "0": "0",
+      "1/2": "0",
+      "1": "6"
+    },
     "special": "cos-tridiagonal",
     "n": 5,
     "hint": "沿主对角线看冲击波，再回到递推。",

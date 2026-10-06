@@ -103,7 +103,7 @@
   // numeric snapshot at theta = pi/2.
   function cosTridiagonal(n) {
     if (!Number.isInteger(n) || n < 1 || n > 6) throw new Error('三对角阶数须为 1 至 6。');
-    const matrix = Array.from({length:n}, (_, r) => Array.from({length:n}, (_, c) => r === c ? '2x' : Math.abs(r - c) === 1 ? -1 : 0));
+    const matrix = Array.from({length:n}, (_, r) => Array.from({length:n}, (_, c) => r === c ? '2x' : Math.abs(r - c) === 1 ? 1 : 0));
     const determinants = [[E.parse(1)]];
     if (n >= 1) determinants.push(polynomial('2x'));
     for (let k = 2; k <= n; k++) determinants.push(add(multiply(polynomial('2x'), determinants[k - 1]), constantMultiply(determinants[k - 2], -1)));

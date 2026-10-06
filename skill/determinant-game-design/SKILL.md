@@ -90,7 +90,7 @@ Prefer small integer matrices (`0`, `1`, `2`, `3`, `4`) in the first ten levels.
 
 After approximately one minute without a win, offer a yellow “看最短演示” card containing a verified route. It should reveal the next useful idea without marking the level complete.
 
-For leaving behavior, prefer a gentle, dismissible in-page prompt when there is unsaved progress: “不好玩吗？还是做题更方便？如果这个实验帮你理解了一点行列式，它就完成使命了。” Do not trap the user, spam `beforeunload`, or rely on a custom browser message that the browser will ignore. A standard `beforeunload` guard may be used only when there is real unsaved progress and the browser supports it.
+For leaving behavior, allow one gentle, dismissible in-page prompt after the first real action: “不好玩吗？还是做题更方便，那么帮助到你学习行列式了，这就已经完成了此游戏的使命了~”. Show it once per session, never trap the user, spam `beforeunload`, or rely on a custom browser message. A standard `beforeunload` guard may be used only as a native fallback when there is real unsaved progress.
 
 ## Spectator and promotion surfaces
 
@@ -107,3 +107,12 @@ Give them stable composition, enough contrast, and a way to pause or replay. A p
 For this user's games, use the public GitHub repository and GitHub Pages as the authoritative delivery path. Keep each meaningful experience change in a separate commit with tests. A public URL from another hosting provider can be a preview, but it is not the canonical release. Never publish credentials, local logs, browser data, or unrelated private files.
 
 For detailed source research and playtest findings, read [references/game-ux-sources.md](references/game-ux-sources.md) when the current task needs them. The file should contain links and concise notes, not copied manuals.
+
+## Lessons from the determinant-lab rebuild
+
+- Lock the paper palette before adding motion: white, gray and ink remain the stage; motion uses only opacity and transform, with a reduced-motion path.
+- Verify every claim on the deployed GitHub Pages URL in fresh desktop and mobile browser contexts. Local screenshots alone are not acceptance evidence.
+- A first-time player needs a real spotlight sequence: matrix → target → source → execute → counter → answer. The target action must be performed by the player; prose cannot substitute for it.
+- Every level replay must use the same block, arrow, zero-pop and diagonal-reading vocabulary as live play. A changing matrix image without motion is not a demo.
+- Keep special lessons explicit: the tridiagonal recurrence, Vandermonde sign/product, Laplace cofactors and permutation inversions need inspectable intermediate states.
+- A leave prompt is a one-time, friendly invitation, never a navigation trap.
